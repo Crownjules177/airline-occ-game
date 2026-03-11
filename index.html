@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airline OCC - Operations Control Centre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+
+  <!-- Setup Screen -->
+  <div id="setup-screen" class="setup-screen">
+    <div class="setup-card">
+      <h1>Operations Control Centre</h1>
+      <p class="subtitle">Airline Duty Manager Simulation</p>
+      <div class="setup-field">
+        <label for="player-name">Your Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="30" autocomplete="off">
+      </div>
+      <div class="setup-field">
+        <label for="airline-name">Airline Name</label>
+        <input type="text" id="airline-name" placeholder="e.g. Pacific Air" maxlength="30" autocomplete="off">
+      </div>
+      <button class="btn-begin" id="btn-begin" disabled>Begin Operations</button>
+      <div class="setup-rules">
+        <strong>Mission Briefing:</strong> Manage your airline's daily operations. Keep on-time performance above 80%. Respond to events from your operations teams — cancel risky flights or press on. One safety incident and you're grounded.
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Dashboard -->
+  <div id="game-container" class="game-container">
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div>
+          <span class="airline-brand" id="airline-brand"></span>
+          <span class="airline-code" id="airline-code"></span>
+        </div>
+        <div class="game-clock" id="game-clock">06:00</div>
+      </div>
+      <div class="status-indicators">
+        <button class="btn-pause" id="btn-pause">Pause</button>
+        <button class="btn-ff" id="btn-fast-forward" title="Hold to fast forward (2x speed)">FF &gt;&gt;</button>
+        <div class="status-pill">
+          <span class="label">Day</span>
+          <span class="value" id="day-of-week">Monday</span>
+        </div>
+        <div class="status-pill">
+          <span class="label">Level</span>
+          <span class="value" id="day-number">1</span>
+        </div>
+        <div class="status-pill otp">
+          <span class="label">OTP</span>
+          <span class="value good" id="otp-value">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Board -->
+    <div class="message-board" id="message-board">
+      <div class="panel-header">Operations Log</div>
+      <div class="message-list" id="message-list"></div>
+    </div>
+
+    <!-- Flight Board -->
+    <div class="flight-board" id="flight-board">
+      <div class="panel-header">Flight Board</div>
+      <table class="flight-table">
+        <colgroup>
+          <col style="width:16%">
+          <col style="width:18%">
+          <col style="width:14%">
+          <col style="width:14%">
+          <col style="width:14%">
+          <col style="width:24%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Flight</th>
+            <th>Route</th>
+            <th>STD</th>
+            <th>ETD</th>
+            <th>ATD</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="flight-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Airport View -->
+    <div class="airport-view">
+      <canvas id="airport-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Event Decision Modal -->
+  <div class="event-modal-overlay" id="event-modal-overlay">
+    <div class="event-modal">
+      <div class="dept-header">
+        <img class="manager-avatar" id="event-manager-avatar" src="" alt="">
+        <span class="dept-icon" id="event-dept-icon"></span>
+        <div class="dept-info">
+          <div class="dept-name" id="event-dept-name"></div>
+          <div class="manager-name" id="event-manager-name"></div>
+        </div>
+        <span class="risk-badge" id="event-risk-badge"></span>
+      </div>
+      <h3 class="event-title" id="event-title"></h3>
+      <div class="flight-ref" id="event-flight-ref"></div>
+      <div class="event-description" id="event-description"></div>
+      <div class="decision-timer">
+        Auto-cancel in <span class="countdown" id="event-countdown">15</span>s
+      </div>
+      <div class="decision-buttons" id="decision-buttons">
+        <button class="btn-cancel-flight" id="btn-cancel-flight">
+          Cancel Flight
+          <span class="btn-key-hint">Press 1</span>
+        </button>
+        <button class="btn-ground-fleet" id="btn-ground-fleet" style="display:none;">
+          Ground Fleet Type
+          <span class="btn-key-hint">Press 3</span>
+        </button>
+        <button class="btn-continue-ops" id="btn-continue-ops">
+          Continue Ops
+          <span class="btn-key-hint">Press 2</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="overlay-screen" id="game-over-screen">
+    <div class="overlay-card game-over">
+      <h2>Operations Suspended</h2>
+      <p class="overlay-subtitle" id="game-over-reason"></p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="go-days">0</div>
+          <div class="stat-label">Days Survived</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="go-flights">0</div>
+          <div class="stat-label">Flights Operated</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="go-otp">0%</div>
+          <div class="stat-label">Final OTP</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="go-cancelled">0</div>
+          <div class="stat-label">Flights Cancelled</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-restart">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Day Complete Screen -->
+  <div class="overlay-screen" id="day-complete-screen">
+    <div class="overlay-card day-complete">
+      <h2>Day Complete</h2>
+      <p class="overlay-subtitle" id="day-complete-subtitle"></p>
+      <p class="otp-warning" id="dc-otp-warning" style="display:none;"></p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="dc-flights">0</div>
+          <div class="stat-label">Flights Today</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="dc-otp">0%</div>
+          <div class="stat-label">Today's OTP</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="dc-events">0</div>
+          <div class="stat-label">Events Handled</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="dc-cancelled">0</div>
+          <div class="stat-label">Cancellations</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-next-day">Next Day</button>
+    </div>
+  </div>
+
+  <!-- Justification Prompt Modal -->
+  <div class="overlay-screen" id="justification-overlay" style="display:none;">
+    <div class="overlay-card justification-card">
+      <h2 id="justification-title"></h2>
+      <p class="justification-prompt-text" id="justification-prompt"></p>
+      <textarea id="justification-input" rows="4" placeholder="Type your justification..." maxlength="500"></textarea>
+      <div class="justification-footer">
+        <span class="justification-hint">For the record only. No gameplay impact.</span>
+        <button class="btn-primary" id="btn-submit-justification">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

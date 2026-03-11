@@ -1,0 +1,33 @@
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-panel: #1a2332;
+  --bg-panel-hover: #1f2b3d;
+  --border-color: #2a3a4a;
+  --text-primary: #e0e7ef;
+  --text-secondary: #8899aa;
+  --text-muted: #556677;
+  --accent-green: #22c55e;
+  --accent-green-dim: #166534;
+  --accent-amber: #f59e0b;
+  --accent-amber-dim: #92400e;
+  --accent-red: #ef4444;
+  --accent-red-dim: #991b1b;
+  --accent-blue: #3b82f6;
+  --accent-blue-dim: #1e3a5f;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -1,0 +1,56 @@
+.game-container {
+  display: none;
+  grid-template-rows: 52px 1fr 260px;
+  grid-template-columns: 2fr 3fr;
+  grid-template-areas:
+    "header  header"
+    "messages flights"
+    "airport airport";
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  gap: 1px;
+  background: var(--border-color);
+}
+
+.game-container.active {
+  display: grid;
+}
+
+.status-bar {
+  grid-area: header;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.message-board {
+  grid-area: messages;
+  background: var(--bg-primary);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.flight-board {
+  grid-area: flights;
+  background: var(--bg-primary);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.airport-view {
+  grid-area: airport;
+  background: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.airport-view canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
