@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thinking — Human Value</title>
+  <meta name="description" content="Weekly AI briefs and notes from Julian Dennis on human intelligence, AI collaboration, and the future of work.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Human Value</a>
+      <div class="nav-links">
+        <a href="thinking.html" class="active">Thinking</a>
+        <a href="about.html">About</a>
+        <a href="connect.html">Let's talk</a>
+      </div>
+      <button class="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+
+    <section class="page-hero hero-canvas-host page-hero-canvas">
+      <canvas class="circles-canvas" aria-hidden="true"></canvas>
+      <div class="container container-narrow hero-content">
+        <h1>Thinking</h1>
+        <p class="page-sub">Weekly AI briefs, notes, and working ideas. This is thinking in public &mdash; not polished positions.</p>
+      </div>
+    </section>
+
+    <section class="posts-list">
+      <div class="container container-narrow">
+        <div class="posts-filter">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="brief">AI Briefs</button>
+          <button class="filter-btn" data-filter="note">Notes</button>
+          <button class="filter-btn" data-filter="essay">Essays</button>
+        </div>
+        <div id="posts-container">
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-logo">Human Value</span>
+        <span class="footer-credit">Julian Dennis &middot; Melbourne</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/posts.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/circles.js"></script>
+</body>
+</html>
