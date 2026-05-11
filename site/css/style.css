@@ -679,6 +679,22 @@ img { max-width: 100%; display: block; }
 
 .post-body li { margin-bottom: 0.5rem; }
 
+.post-body .post-sources {
+  margin-top: var(--space-md);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  font-style: normal;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.post-body .post-sources em {
+  font-family: var(--font-sans);
+  font-style: normal;
+}
+
 .post-footer-cta {
   padding: var(--space-md) 0 var(--space-xl);
   text-align: center;
