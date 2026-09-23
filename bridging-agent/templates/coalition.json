@@ -1,0 +1,69 @@
+{
+  "id": "coalition",
+  "name": "Coalition of Consequence (draft)",
+  "version": 1,
+  "status": "draft",
+  "description": "Draft template: about 40 people forming shared perspectives and working groups on navigating the AI revolution. Stages will be remapped to Andy's facilitation framework once it is shared.",
+  "participantUnit": "individual",
+  "unitLabel": { "singular": "member", "plural": "members" },
+  "groupSize": { "min": 20, "max": 100 },
+  "timezone": "Australia/Sydney",
+  "stages": [
+    { "id": "intake", "label": "Pre-call intake", "enabled": true, "description": "A short interview about what you see coming, your fears, your hopes and what you bring." },
+    { "id": "map", "label": "Perspective map", "enabled": true, "description": "Agreement, tensions, issue clusters and unexpected alliances." },
+    { "id": "agree", "label": "Scope and priorities", "enabled": true, "description": "Draft scope statements and priority issues to respond to." },
+    { "id": "act", "label": "Working groups", "enabled": true, "description": "Working-group deliverables members claim." },
+    { "id": "sustain", "label": "Weekly digest", "enabled": true, "description": "A weekly digest of progress and drift." },
+    { "id": "bridge", "label": "Alliances", "enabled": true, "description": "Suggested connections and small groups around emerging ideas." }
+  ],
+  "intake": {
+    "intro": "Thanks for joining the coalition. I'll ask a few questions before our first call so the group can see where we agree, where we differ, and who might work together. You'll approve exactly how I summarise you before anyone else sees it.",
+    "targetMinutes": 10,
+    "topics": [
+      { "id": "outlook", "question": "What do you see coming with AI over the next few years?", "fieldKeys": ["outlook"] },
+      { "id": "fears", "question": "What are your biggest fears?", "fieldKeys": ["fears"] },
+      { "id": "hopes", "question": "And your biggest hopes?", "fieldKeys": ["hopes"] },
+      { "id": "brings", "question": "What expertise and networks do you bring?", "fieldKeys": ["expertise", "networks"] },
+      { "id": "issues", "question": "Which issues would you act on?", "fieldKeys": ["issues"] },
+      { "id": "time", "question": "Roughly how many hours a month could you give, and which days suit you?", "fieldKeys": ["hours_per_month", "available_days"] }
+    ]
+  },
+  "profileFields": [
+    { "key": "outlook", "label": "What they see coming", "description": "Their view of what is coming with AI.", "type": "text", "defaultVisibility": "group" },
+    { "key": "fears", "label": "Biggest fears", "description": "Their biggest fears about AI.", "type": "list", "defaultVisibility": "group" },
+    { "key": "hopes", "label": "Biggest hopes", "description": "Their biggest hopes for AI.", "type": "list", "defaultVisibility": "group" },
+    { "key": "expertise", "label": "Expertise", "description": "Expertise they bring.", "type": "list", "defaultVisibility": "group" },
+    { "key": "networks", "label": "Networks", "description": "Networks and relationships they could draw on.", "type": "list", "defaultVisibility": "host" },
+    { "key": "issues", "label": "Issues they'd act on", "description": "Issues they would act on.", "type": "list", "defaultVisibility": "group" },
+    { "key": "hours_per_month", "label": "Hours a month", "description": "Hours a month available.", "type": "number", "defaultVisibility": "host" },
+    { "key": "available_days", "label": "Available days", "description": "Days that usually suit.", "type": "weekdays", "defaultVisibility": "group" }
+  ],
+  "map": {
+    "thresholdPercent": 70,
+    "outputs": [
+      { "kind": "agreement", "label": "Agreement", "description": "Views most members share." },
+      { "kind": "tension", "label": "Tensions", "description": "Real disagreements, stated fairly from each side." },
+      { "kind": "cluster", "label": "Issue clusters", "description": "Issues that group naturally and have people ready to act." },
+      { "kind": "pairing", "label": "Unexpected alliances", "description": "Members who would not obviously connect but share a cause or complement each other." },
+      { "kind": "minority", "label": "Minority views", "description": "Views held by a few, kept visible." }
+    ]
+  },
+  "proposal": {
+    "label": "Scope and working groups",
+    "guidance": "Draft a scope statement and a small number of priority issues, each with a working group and a first deliverable.",
+    "parts": ["Scope statement", "Priority issue brief", "Working-group plan"],
+    "cadences": ["weekly", "fortnightly", "monthly"],
+    "maxOccurrences": 6,
+    "availabilityField": "available_days",
+    "themeField": "issues"
+  },
+  "act": {
+    "eventNoun": "working-group checkpoint",
+    "taskNoun": "deliverable",
+    "defaultTime": "12:00",
+    "durationMinutes": 60,
+    "location": "Online"
+  },
+  "sustain": { "cadence": "weekly_digest" },
+  "channels": ["web", "email"]
+}
