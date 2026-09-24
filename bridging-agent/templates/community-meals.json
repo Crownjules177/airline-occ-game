@@ -1,0 +1,75 @@
+{
+  "id": "community-meals",
+  "name": "Community meal share",
+  "version": 1,
+  "status": "ready",
+  "description": "Households in one building split the parts of a shared meal so everyone eats well with less effort.",
+  "participantUnit": "household",
+  "unitLabel": { "singular": "household", "plural": "households" },
+  "groupSize": { "min": 5, "max": 10 },
+  "timezone": "Australia/Sydney",
+  "stages": [
+    { "id": "intake", "label": "Get to know you", "enabled": true, "description": "A short chat about what your household loves, avoids and can cook." },
+    { "id": "map", "label": "What we share", "enabled": true, "description": "Shared tastes, hard constraints, schedule overlaps and skill pairings." },
+    { "id": "agree", "label": "Agree a rotation", "enabled": true, "description": "Two or three rotation options. Everyone says support, can live with it, or object." },
+    { "id": "act", "label": "Cook and eat", "enabled": true, "description": "Claim a part of each meal. Everything lands in your own calendar." },
+    { "id": "sustain", "label": "Keep it going", "enabled": true, "description": "Reminders, quick feedback after each meal, and small adjustments." },
+    { "id": "bridge", "label": "Connections", "enabled": false, "description": "Suggested pairings, such as two households who want to learn the same dish." }
+  ],
+  "intake": {
+    "intro": "Hi! I'm helping your building set up a shared meal. Everyone brings one part to the rooftop dining room and we eat together. I'll ask a few quick questions about your household, and you'll see and approve exactly how I summarise you before anyone else does. You can type or use your phone's dictation, and stop and come back any time.",
+    "targetMinutes": 8,
+    "topics": [
+      { "id": "household", "question": "Who's in your household, and how many people would be eating (adults and kids)?", "fieldKeys": ["household_size", "household_notes"] },
+      { "id": "cuisines", "question": "What cuisines or dishes does your household love?", "fieldKeys": ["cuisines_loved"] },
+      { "id": "avoid", "question": "Are there foods you'd rather avoid, even if they're not a strict requirement?", "fieldKeys": ["foods_avoided"] },
+      { "id": "dietary", "question": "Any dietary requirements the meal must respect, such as vegetarian, halal, or no pork?", "fieldKeys": ["dietary_requirements"] },
+      { "id": "allergies", "question": "Any food allergies? These stay private: I only ever show them as a constraint like \"no nuts in this meal\", never linked to your household.", "fieldKeys": ["allergies"] },
+      { "id": "cooking", "question": "How confident do you feel cooking for a group, and which parts of a meal do you most enjoy making?", "fieldKeys": ["cooking_confidence", "parts_enjoyed"] },
+      { "id": "schedule", "question": "Which weeknights could you usually make a shared dinner?", "fieldKeys": ["free_weeknights"] },
+      { "id": "learn", "question": "Last one: is there anything you'd love to learn to cook, or to learn from a neighbour?", "fieldKeys": ["want_to_learn"] }
+    ]
+  },
+  "profileFields": [
+    { "key": "household_size", "label": "People eating", "description": "Number of people in the household who would eat at shared meals.", "type": "number", "defaultVisibility": "group", "example": "4" },
+    { "key": "household_notes", "label": "About the household", "description": "Who is in the household, in their own words (for example: two adults, kids aged 4 and 7).", "type": "text", "defaultVisibility": "group", "example": "Two adults, two kids (4 and 7)" },
+    { "key": "cuisines_loved", "label": "Cuisines loved", "description": "Cuisines or dishes the household loves.", "type": "list", "defaultVisibility": "group", "example": "Vietnamese, Italian" },
+    { "key": "foods_avoided", "label": "Foods avoided", "description": "Foods the household would rather avoid (preferences, not strict requirements).", "type": "list", "defaultVisibility": "group", "constraint": "soft", "example": "Very spicy food" },
+    { "key": "dietary_requirements", "label": "Dietary requirements", "description": "Requirements every meal must respect, such as vegetarian, halal, no pork.", "type": "list", "defaultVisibility": "group", "constraint": "hard", "example": "No pork" },
+    { "key": "allergies", "label": "Allergies", "description": "Food allergies. Only surfaced as anonymous constraints on every meal.", "type": "list", "defaultVisibility": "agent", "constraint": "hard", "example": "Tree nuts" },
+    { "key": "cooking_confidence", "label": "Cooking confidence", "description": "How confident the household feels cooking for a group.", "type": "choice", "options": ["Beginner", "Comfortable", "Confident", "Love it"], "defaultVisibility": "group" },
+    { "key": "parts_enjoyed", "label": "Parts they enjoy making", "description": "Which parts of a meal the household enjoys making. A meal can be split by course (main, side, dessert) or by component (protein, carb, veg).", "type": "multi", "options": ["Main", "Side", "Salad", "Dessert", "Protein", "Carb", "Veg", "Bread", "Drinks"], "defaultVisibility": "group" },
+    { "key": "free_weeknights", "label": "Free weeknights", "description": "Weeknights the household could usually make a shared dinner.", "type": "weekdays", "defaultVisibility": "group" },
+    { "key": "want_to_learn", "label": "Would love to learn", "description": "Dishes or skills the household would love to learn, possibly from a neighbour.", "type": "list", "defaultVisibility": "group", "example": "Dumplings" }
+  ],
+  "map": {
+    "thresholdPercent": 70,
+    "outputs": [
+      { "kind": "agreement", "label": "Shared tastes", "description": "Cuisines, dishes or preferences several households share." },
+      { "kind": "constraint", "label": "Hard constraints", "description": "Requirements every meal must respect. Never attributed to a household." },
+      { "kind": "tension", "label": "Tensions", "description": "Real trade-offs, such as a popular cuisine that conflicts with another household's avoidances." },
+      { "kind": "schedule", "label": "Schedule overlaps", "description": "Nights that suit the most households." },
+      { "kind": "pairing", "label": "Skill pairings", "description": "Unexpected pairings: someone who wants to learn what another loves to cook." },
+      { "kind": "minority", "label": "Minority views", "description": "Something only one or two households raised, kept visible rather than averaged away." }
+    ]
+  },
+  "proposal": {
+    "label": "Rotation plan",
+    "guidance": "Start monthly or fortnightly. Everyone brings their part to the shared rooftop dining room and eats together. Aim for a meal that is as complete and accessible as possible for a busy family with young kids: a main, sides, and something kids will eat. A meal can be split by course (main, side, dessert) or by component (protein, carb, veg); pick whichever fits the number of households.",
+    "parts": ["Main", "Side", "Salad", "Dessert"],
+    "cadences": ["weekly", "fortnightly", "monthly"],
+    "maxOccurrences": 6,
+    "availabilityField": "free_weeknights",
+    "themeField": "cuisines_loved",
+    "partsField": "parts_enjoyed"
+  },
+  "act": {
+    "eventNoun": "shared meal",
+    "taskNoun": "meal part",
+    "defaultTime": "18:00",
+    "durationMinutes": 120,
+    "location": "Rooftop dining room"
+  },
+  "sustain": { "cadence": "per_event" },
+  "channels": ["web", "whatsapp_link"]
+}
