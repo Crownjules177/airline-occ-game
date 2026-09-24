@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "vercel-build": "tsx scripts/migrate.ts && next build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -33,5 +35,8 @@
     "tsx": "^4",
     "typescript": "^5.9",
     "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

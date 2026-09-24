@@ -45,6 +45,8 @@ npm run typecheck
 
 ## Deploying the pilot
 
+Step-by-step: [`docs/deploy.md`](docs/deploy.md).
+
 - **Database:** Postgres in an Australian region (NFR3), e.g. Supabase in `ap-southeast-2` (Sydney). Set `DATABASE_URL`; migrations in `drizzle/` run on first request.
 - **App:** Vercel or any Node host. Set `APP_URL` to the public URL, plus `ANTHROPIC_API_KEY` and `BRIDGING_MODEL`. PGlite is for local use only; serverless hosts need `DATABASE_URL`.
 - **Email (phase 2):** set `RESEND_API_KEY` and `EMAIL_FROM` to send magic links by email.

@@ -4,6 +4,9 @@ import { ToolError } from "@/engine/context";
 import { createSession } from "@/engine/auth";
 import { getCtx, SESSION_COOKIE, sessionCookieOptions } from "@/app/lib/server";
 
+// Map and proposal drafting can take a minute or more at high effort.
+export const maxDuration = 300;
+
 /** The web app's only write path into the engine: POST /api/tools/<name> with a JSON body. */
 export async function POST(req: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
