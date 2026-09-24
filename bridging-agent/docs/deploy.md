@@ -32,7 +32,7 @@ Use the **transaction pooler** (port 6543), not the direct connection: Vercel ca
    | `APP_URL` | leave for now |
 
 4. **Deploy.** The build applies the database migrations first.
-5. Copy the production URL (for example `https://bridging-agent.vercel.app`). Go to **Settings → Environment Variables**, add `APP_URL` with that URL (no trailing slash), then **Deployments → ⋯ → Redeploy**. Invite, sign-in and calendar links use it.
+5. Copy the production URL (for example `https://bridging-agent.vercel.app`). Go to **Settings → Environment Variables**, add `APP_URL` with that URL (no trailing slash), then **Deployments → ⋯ → Redeploy**. Invite, sign-in and calendar links use it. (Without it the app falls back to Vercel's production domain; set it anyway if you add a custom domain.)
 
 The app's functions run in Sydney (`vercel.json`), next to the database.
 

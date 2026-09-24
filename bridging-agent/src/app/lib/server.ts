@@ -10,8 +10,13 @@ export const SESSION_COOKIE = "ba_session";
 
 const g = globalThis as unknown as { __bridgingAgent?: AgentService };
 
+/**
+ * Public base URL for links in emails, invites and calendar feeds. APP_URL wins; on Vercel we fall
+ * back to the project's production domain, which Vercel sets automatically.
+ */
 export function appUrl() {
-  return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  return (process.env.APP_URL || (vercel ? `https://${vercel}` : "http://localhost:3000")).replace(/\/$/, "");
 }
 
 export async function getCtx(): Promise<ToolContext> {
