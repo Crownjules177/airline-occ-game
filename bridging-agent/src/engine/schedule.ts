@@ -85,13 +85,23 @@ function nextMonthly(date: string): string {
   return addDays(nextWeekday(first, weekday), (nth - 1) * 7);
 }
 
-/** Expand a schedule into local dates. */
-export function expandSchedule(s: Schedule): string[] {
-  const dates: string[] = [];
+/** Every date in the cadence from the start, ignoring skips and the occurrence count. */
+export function* cadenceDates(s: Pick<Schedule, "weekday" | "cadence" | "startDate">): Generator<string> {
   let d = nextWeekday(s.startDate, s.weekday as Weekday);
-  for (let i = 0; i < s.occurrences; i++) {
-    dates.push(d);
+  for (;;) {
+    yield d;
     d = s.cadence === "weekly" ? addDays(d, 7) : s.cadence === "fortnightly" ? addDays(d, 14) : nextMonthly(d);
+  }
+}
+
+/** Expand a schedule into local dates, leaving out skipped dates and continuing until it has enough. */
+export function expandSchedule(s: Schedule): string[] {
+  const skip = new Set(s.skipDates ?? []);
+  const dates: string[] = [];
+  let guard = 0;
+  for (const d of cadenceDates(s)) {
+    if (dates.length >= s.occurrences || guard++ > s.occurrences + skip.size + 52) break;
+    if (!skip.has(d)) dates.push(d);
   }
   return dates;
 }

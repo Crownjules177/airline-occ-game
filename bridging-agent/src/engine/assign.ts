@@ -1,6 +1,7 @@
 import type { Commitment, EventRow, Participant, Profile } from "./db/schema";
 import { WEEKDAYS, type Template } from "./template";
 import { valuesOf } from "./values";
+import { isAway } from "./dates";
 
 export type Suggestion = {
   commitmentId: string;
@@ -25,6 +26,8 @@ export function suggestAssignments(opts: {
   const { template, events, commitments, participants, profiles } = opts;
   const partsKey = template.proposal.partsField;
   const daysKey = template.proposal.availabilityField;
+  const awayKey = template.proposal.unavailableField;
+  const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: opts.timezone, year: "numeric", month: "2-digit", day: "2-digit" });
   const eligible = participants.filter((p) => profiles.some((x) => x.participantId === p.id && x.status === "approved"));
   const load = new Map(eligible.map((p) => [p.id, 0]));
   for (const c of commitments) if (c.participantId && load.has(c.participantId)) load.set(c.participantId, load.get(c.participantId)! + 1);
@@ -47,9 +50,12 @@ export function suggestAssignments(opts: {
   for (const c of open) {
     const event = eventsById.get(c.eventId)!;
     const day = weekdayFmt.format(event.startsAt).slice(0, 3);
+    const date = localDate.format(event.startsAt);
     let best: { p: Participant; score: number; reasons: Suggestion["reasons"] } | null = null;
     for (const p of eligible) {
       const profile = profiles.find((x) => x.participantId === p.id)!;
+      // Never suggest someone for a date they've said they can't make.
+      if (awayKey && isAway(date, valuesOf(profile.fields[awayKey]?.value ?? null))) continue;
       const reasons: Suggestion["reasons"] = [];
       let score = -3 * load.get(p.id)!;
       if (busyAt.get(event.id)?.has(p.id)) score -= 10;

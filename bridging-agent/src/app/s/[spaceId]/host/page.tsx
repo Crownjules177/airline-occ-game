@@ -33,6 +33,20 @@ export default async function Host({ params }: { params: Promise<{ spaceId: stri
         </p>
       </div>
 
+      {o.awayDatesWhatsapp && (
+        <div className="card stack">
+          <h3>Dates people can't make</h3>
+          <p className="small">
+            Proposals avoid dates when too many are away. Anyone who joined before this was asked can add theirs on their
+            profile in a minute. You'll only ever see whether they've answered, not
+            their dates.
+          </p>
+          <a className="btn whatsapp" href={o.awayDatesWhatsapp} target="_blank" rel="noreferrer">
+            Ask everyone on WhatsApp
+          </a>
+        </div>
+      )}
+
       <h2>Who's where</h2>
       <p className="small muted">You see progress only. Private answers stay private, even from you.</p>
       <div className="card scroll-x">
@@ -42,6 +56,7 @@ export default async function Host({ params }: { params: Promise<{ spaceId: stri
               <th>Name</th>
               <th>Chat</th>
               <th>Profile</th>
+              {o.awayDatesWhatsapp && <th>Away dates</th>}
             </tr>
           </thead>
           <tbody>
@@ -55,6 +70,7 @@ export default async function Host({ params }: { params: Promise<{ spaceId: stri
                 <td>
                   <span className={`pill ${p.profile === "approved" ? "good" : ""}`}>{STATUS[p.profile]}</span>
                 </td>
+                {o.awayDatesWhatsapp && <td>{p.awayDatesAnswered ? "Answered" : <span className="muted">Not yet</span>}</td>}
               </tr>
             ))}
           </tbody>

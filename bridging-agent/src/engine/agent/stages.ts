@@ -3,6 +3,9 @@ import type { Stage } from "./service";
 import { WEEKDAYS, type Template, type Weekday } from "../template";
 import type { FieldValue, MapItem, TranscriptMessage } from "../db/schema";
 import { parseFieldValue, parseWeekdays, valuesOf } from "../values";
+import { fitSchedule, type AwayCounts } from "../availability";
+import { formatDateValue, isAway, parseDatesFromText } from "../dates";
+import { cadenceDates } from "../schedule";
 
 const json = (label: string, data: unknown) => `<${label}>\n${JSON.stringify(data, null, 2)}\n</${label}>`;
 
@@ -28,6 +31,8 @@ function templateBrief(t: Template) {
 // =============================================================================================
 
 export type IntakeTurnInput = {
+  /** Today's date in the space's timezone, so relative dates ("next month") can be resolved. */
+  today: string;
   displayName: string;
   transcript: TranscriptMessage[];
   topicsCovered: string[];
@@ -52,6 +57,7 @@ export const intakeTurn: Stage<IntakeTurnInput, IntakeTurnOutput> = {
         topics: t.intake.topics,
       }),
       json("participant", { name: input.displayName }),
+      json("today", input.today),
       json("topics_already_covered", input.topicsCovered),
       json("transcript", input.transcript.map((m) => ({ from: m.role, text: m.text }))),
       "Write the next agent message.",
@@ -81,7 +87,7 @@ export function intakeOpening(t: Template): string {
 // Intake: draft a profile from the transcript
 // =============================================================================================
 
-export type ProfileDraftInput = { displayName: string; transcript: TranscriptMessage[] };
+export type ProfileDraftInput = { today: string; displayName: string; transcript: TranscriptMessage[] };
 export type ProfileDraftOutput = { summary: string; fields: Record<string, FieldValue> };
 
 function fieldSchema(f: Template["profileFields"][number]) {
@@ -99,6 +105,10 @@ function fieldSchema(f: Template["profileFields"][number]) {
       return z.enum(f.options as [string, ...string[]]).nullable().describe(d);
     case "multi":
       return z.array(z.enum(f.options as [string, ...string[]])).describe(d);
+    case "dates":
+      return z
+        .array(z.string().describe("YYYY-MM-DD for one day, or YYYY-MM-DD/YYYY-MM-DD for an inclusive range"))
+        .describe(d);
   }
 }
 
@@ -114,6 +124,7 @@ export const profileDraft: Stage<ProfileDraftInput, ProfileDraftOutput> = {
     [
       json("template", templateBrief(t)),
       json("participant", { name: input.displayName }),
+      json("today", input.today),
       json("transcript", input.transcript.map((m) => ({ from: m.role, text: m.text }))),
       "Draft the profile.",
     ].join("\n\n"),
@@ -129,7 +140,7 @@ export const profileDraft: Stage<ProfileDraftInput, ProfileDraftOutput> = {
       if (!topic) continue;
       for (const key of topic.fieldKeys) {
         const field = t.profileFields.find((f) => f.key === key)!;
-        fields[key] = parseFieldValue(field, m.text);
+        fields[key] = parseFieldValue(field, m.text, input.today);
       }
     }
     const shared = t.profileFields
@@ -341,6 +352,7 @@ export type ProposalDraft = {
   time: string;
   themes: string[];
   parts: string[];
+  skipDates: string[];
   sourceContributionIds: string[];
   mapItemIds: string[];
 };
@@ -352,6 +364,8 @@ export type ProposalContext = {
   map: Pick<MapItem, "id" | "kind" | "title" | "detail" | "sourceContributionIds">[];
   constraints: string[];
   availability: Partial<Record<Weekday, number>>;
+  /** Households away on specific upcoming dates (anonymous counts; only dates with someone away). */
+  awayCounts: AwayCounts;
   sharedContributions: SharedContribution[];
   ideas: SharedContribution[];
 };
@@ -368,6 +382,7 @@ const proposalDraftSchema = (t: Template) =>
     time: z.string().describe("HH:MM, 24-hour"),
     themes: z.array(z.string()),
     parts: z.array(z.string()),
+    skipDates: z.array(z.string()).describe("YYYY-MM-DD dates in the cadence to leave out; later dates fill in"),
     sourceContributionIds: z.array(z.string()),
     mapItemIds: z.array(z.string()),
   }) as unknown as z.ZodType<ProposalDraft>;
@@ -394,6 +409,7 @@ function renderContext(input: ProposalContext) {
     json("map", input.map),
     json("hard_constraints", input.constraints),
     json("availability_counts", input.availability),
+    json("away_counts_by_date", input.awayCounts),
     json("shared_contributions", input.sharedContributions),
     json("ideas", input.ideas),
   ];
@@ -431,6 +447,7 @@ function mockOption(
   const count = input.availability[weekday] ?? 0;
   const agreement = input.map.filter((m) => m.kind === "agreement" || m.kind === "schedule");
   const every = cadence === "weekly" ? "Every" : cadence === "fortnightly" ? "Every second" : "One";
+  const fit = fitSchedule({ weekday, cadence, occurrences }, input.earliestStart, input.awayCounts, input.participantCount);
   return {
     title: `${cadence[0].toUpperCase()}${cadence.slice(1)} ${weekday} ${t.act.eventNoun}s`,
     summary: `${every} ${weekday}${cadence === "monthly" ? " a month" : ""}, ${occurrences} times to start, at ${t.act.location}. ${
@@ -446,11 +463,12 @@ function mockOption(
     ],
     weekday,
     cadence,
-    startDate: input.earliestStart,
+    startDate: fit.startDate,
     occurrences,
     time: t.act.defaultTime,
     themes,
     parts: t.proposal.parts,
+    skipDates: fit.skipDates,
     sourceContributionIds: [],
     mapItemIds: agreement.map((m) => m.id),
   };
@@ -498,11 +516,24 @@ export const reviseStage: Stage<ReviseInput, ReviseOutput> = {
       "Revise the proposal to resolve the objections.",
     ].join("\n\n"),
   mock: (input, t) => {
-    const p = { ...input.proposal };
+    const p = { ...input.proposal, skipDates: [...(input.proposal.skipDates ?? [])] };
     const text = input.objections.map((o) => o.reason).join(" ");
     const named = parseWeekdays(text).filter((d) => d !== p.weekday);
     const notes: string[] = [];
-    if (named.length) {
+    // Dates named in objections ("we're away 15 Oct") become skipped dates.
+    const named_ = parseDatesFromText(text, input.earliestStart);
+    const awayDates: string[] = [];
+    if (named_.length) {
+      let n = 0;
+      for (const d of cadenceDates(p)) {
+        if (n++ > p.occurrences + p.skipDates.length + 26) break;
+        if (isAway(d, named_) && !p.skipDates.includes(d)) awayDates.push(d);
+      }
+    }
+    if (awayDates.length) {
+      p.skipDates = [...new Set([...p.skipDates, ...awayDates])].sort();
+      notes.push(`skips ${awayDates.map(formatDateValue).join(", ")}`);
+    } else if (named.length) {
       p.weekday = named[0];
       notes.push(`moved to ${named[0]}`);
     } else if (/often|too much|busy|frequent/i.test(text) && t.proposal.cadences.includes("monthly") && p.cadence !== "monthly") {

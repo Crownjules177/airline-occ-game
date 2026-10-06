@@ -27,6 +27,7 @@ export function EditProposal({ spaceId, proposal }: { spaceId: string; proposal:
           cadence: f.get("cadence"),
           startDate: f.get("startDate"),
           occurrences: Number(f.get("occurrences")),
+          skipDates: f.getAll("skip").map(String),
           time: f.get("time"),
           themes: lines(String(f.get("themes"))),
           parts: lines(String(f.get("parts"))),
@@ -75,6 +76,23 @@ export function EditProposal({ spaceId, proposal }: { spaceId: string; proposal:
           <input id="p-occ" name="occurrences" type="number" min={1} defaultValue={s.occurrences} />
         </div>
       </div>
+      <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
+        <legend style={{ fontWeight: 600, marginBottom: 4 }}>
+          Skip dates <span className="hint">Ticked dates are left out and later dates fill in.</span>
+        </legend>
+        {[...new Set([...proposal.dates.map((d: any) => d.date), ...(s.skipDates ?? [])])].sort().map((date: string) => {
+          const info = proposal.dates.find((d: any) => d.date === date);
+          return (
+            <label key={date} className="check">
+              <input type="checkbox" name="skip" value={date} defaultChecked={(s.skipDates ?? []).includes(date)} />
+              <span>
+                {new Date(`${date}T00:00:00Z`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}
+                {info?.away > 0 && <span className="muted"> · {info.away} away</span>}
+              </span>
+            </label>
+          );
+        })}
+      </fieldset>
       <div className="field">
         <label htmlFor="p-themes">
           Themes <span className="hint">One per line, in order.</span>

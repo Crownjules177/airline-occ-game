@@ -8,6 +8,7 @@ export const answers: Record<string, string[]> = {
     "Tree nuts",
     "Confident. We love making the main and dessert",
     "Tuesday and Thursday",
+    "We are away on the 15th of October, and 10-20 Dec",
     "Sourdough bread",
   ],
   Patel: [
@@ -18,6 +19,7 @@ export const answers: Record<string, string[]> = {
     "none",
     "Love it, happy to do the main or a side",
     "Thursday",
+    "15 October, we have a wedding",
     "Dumplings",
   ],
   Okafor: [
@@ -28,6 +30,7 @@ export const answers: Record<string, string[]> = {
     "none",
     "Comfortable, I like doing salad and dessert",
     "Wednesday, Thursday",
+    "None that I know of",
     "Vietnamese",
   ],
   Smith: [
@@ -38,6 +41,7 @@ export const answers: Record<string, string[]> = {
     "Shellfish",
     "Beginner, sides are safest",
     "Thursday and Friday",
+    "none",
     "Italian",
   ],
   Haddad: [
@@ -48,6 +52,7 @@ export const answers: Record<string, string[]> = {
     "none",
     "Confident, mains and bread",
     "Tuesday, Thursday",
+    "12 Nov",
     "Nigerian",
   ],
 };

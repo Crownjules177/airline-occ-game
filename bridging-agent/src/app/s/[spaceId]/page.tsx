@@ -27,6 +27,13 @@ export default async function SpaceHome({ params }: { params: Promise<{ spaceId:
       href: `${base}/profile`,
       cta: "Review profile",
     };
+  } else if (p.needsAwayDates) {
+    next = {
+      title: "Add dates you can't make",
+      body: "Holidays, trips or busy weeks you already know about. It takes a minute and helps the group pick dates. Nobody sees who's away, only how many.",
+      href: `${base}/profile#field-${s.template.unavailableField}`,
+      cta: "Add dates",
+    };
   } else if (p.openProposals > p.respondedProposals) {
     next = {
       title: `${p.openProposals - p.respondedProposals} option(s) need your view`,

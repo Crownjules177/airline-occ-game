@@ -20,6 +20,8 @@ import { addDays, expandSchedule, localToday, nextWeekday, parseDate, zonedTime 
 import { WEEKDAYS, type Weekday } from "../template";
 import { constraintConflicts } from "../values";
 import { newId } from "../ids";
+import { absenceSummary, isAbsenceLine } from "../availability";
+import { isAway } from "../dates";
 import { whatsappShareUrl } from "../notify";
 import { spaceStage } from "./spaces";
 
@@ -33,13 +35,15 @@ async function proposalContext(ctx: ToolContext, m: Member) {
     .from(maps)
     .where(and(eq(maps.spaceId, m.space.id), eq(maps.current, true)));
   if (!map) throw new ToolError("Generate the group map first.", 409);
+  const earliestStart = addDays(localToday(ctx.now, m.space.settings.timezone), LEAD_DAYS);
   const input: ProposalContext = {
-    earliestStart: addDays(localToday(ctx.now, m.space.settings.timezone), LEAD_DAYS),
+    earliestStart,
     timezone: m.space.settings.timezone,
     participantCount: group.people.length,
     map: map.items.map(({ id, kind, title, detail, sourceContributionIds }) => ({ id, kind, title, detail, sourceContributionIds })),
     constraints: group.constraints.labels,
     availability: group.availability,
+    awayCounts: group.awayCounts(earliestStart),
     sharedContributions: group.shared,
     ideas: group.ideas,
   };
@@ -66,7 +70,9 @@ export function sanitizeDraft(
   const occurrences = Math.min(Math.max(Math.round(Number(d.occurrences) || 1), 1), t.proposal.maxOccurrences);
   const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(d.time) ? d.time : t.act.defaultTime;
   const start = parseDate(d.startDate) && d.startDate >= c.input.earliestStart ? d.startDate : c.input.earliestStart;
-  const schedule: Schedule = { weekday, cadence, startDate: nextWeekday(start, weekday), occurrences, time };
+  const startDate = nextWeekday(start, weekday);
+  const skipDates = [...new Set((d.skipDates ?? []).filter((x) => parseDate(x) && x >= startDate))].sort().slice(0, 26);
+  const schedule: Schedule = { weekday, cadence, startDate, occurrences, time, ...(skipDates.length && { skipDates }) };
 
   const themes = d.themes.map((x) => x.trim()).filter(Boolean).slice(0, occurrences);
   const safeThemes = themes.map((theme) => {
@@ -80,7 +86,9 @@ export function sanitizeDraft(
 
   const texts = [d.title, d.summary];
   if (texts.some((x) => leaksPrivate(x, c.group.privatePairs))) return null;
-  const tradeoffs = d.tradeoffs.filter((x) => !leaksPrivate(x, c.group.privatePairs));
+  // The absence line is always recomputed from current data, never taken from the model.
+  const tradeoffs = d.tradeoffs.filter((x) => !leaksPrivate(x, c.group.privatePairs) && !isAbsenceLine(x));
+  if (c.group.unavailable.size) notes.push(absenceSummary(expandSchedule(schedule), c.input.awayCounts, t.unitLabel));
 
   const allowedContribs = new Set([...c.group.shared, ...c.group.ideas].map((x) => x.id).concat(extraAllowedIds));
   const allowedItems = new Set(c.map.items.map((i) => i.id));
@@ -109,6 +117,7 @@ function asDraft(p: Proposal): ProposalDraft {
     time: p.schedule.time,
     themes: p.themes,
     parts: p.parts,
+    skipDates: p.schedule.skipDates ?? [],
     sourceContributionIds: p.sourceContributionIds,
     mapItemIds: p.mapItemIds,
   };
@@ -145,14 +154,17 @@ export const listProposals = defineTool({
           .innerJoin(participants, eq(participants.id, proposalResponses.participantId))
           .where(inArray(proposalResponses.proposalId, ids))
       : [];
-    const people = await ctx.db.select({ id: participants.id }).from(participants).where(eq(participants.spaceId, spaceId));
+    const group = await loadGroup(ctx.db, spaceId, template);
+    const myAway = group.unavailable.get(me.id) ?? [];
     return {
-      participantCount: people.length,
+      participantCount: group.people.length,
       label: template.proposal.label,
       proposals: visible.map((p) => {
         const rs = responses.filter((x) => x.r.proposalId === p.id);
         return {
           ...p,
+          // The actual dates, with how many households are away (anonymous) and whether the caller is.
+          dates: expandSchedule(p.schedule).map((date) => ({ date, away: group.awayCount(date), meAway: isAway(date, myAway) })),
           tally: {
             support: rs.filter((x) => x.r.signal === "support").length,
             liveWith: rs.filter((x) => x.r.signal === "live_with").length,
@@ -208,6 +220,7 @@ export const editProposal = defineTool({
     time: z.string().optional(),
     themes: z.array(z.string()).optional(),
     parts: z.array(z.string()).optional(),
+    skipDates: z.array(z.string()).optional(),
   }),
   run: async (ctx, input) => {
     const m = await requireHost(ctx, input.spaceId);

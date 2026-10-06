@@ -1,5 +1,6 @@
 import { WEEKDAYS, type ProfileField, type Template, type Weekday } from "./template";
 import type { FieldValue, Profile, ProfileFields } from "./db/schema";
+import { normaliseDates, parseDatesFromText } from "./dates";
 
 const NUMBER_WORDS: Record<string, number> = {
   one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
@@ -37,8 +38,10 @@ export function parseWeekdays(text: string): Weekday[] {
   return DAY_PATTERNS.filter(([, re]) => re.test(text)).map(([d]) => d);
 }
 
+const LIST_TYPES = new Set(["list", "multi", "weekdays", "dates"]);
+
 /** Parse free text into a field value. Used for participant edits and by the mock agent. */
-export function parseFieldValue(field: ProfileField, text: string): FieldValue {
+export function parseFieldValue(field: ProfileField, text: string, today = new Date().toISOString().slice(0, 10)): FieldValue {
   const t = text.trim();
   switch (field.type) {
     case "text":
@@ -58,6 +61,8 @@ export function parseFieldValue(field: ProfileField, text: string): FieldValue {
       return splitList(t);
     case "weekdays":
       return parseWeekdays(t);
+    case "dates":
+      return parseDatesFromText(t, today);
     case "choice": {
       const opts = field.options ?? [];
       return opts.find((o) => t.toLowerCase() === o.toLowerCase()) ??
@@ -71,12 +76,13 @@ export function parseFieldValue(field: ProfileField, text: string): FieldValue {
 
 /** Coerce a structured value (from the model or an edit form) into the field's type. */
 export function normaliseFieldValue(field: ProfileField, value: unknown): FieldValue {
-  if (value == null) return field.type === "list" || field.type === "multi" || field.type === "weekdays" ? [] : null;
+  if (value == null) return LIST_TYPES.has(field.type) ? [] : null;
   if (typeof value === "string") return parseFieldValue(field, value);
   if (field.type === "number") return typeof value === "number" && Number.isFinite(value) ? value : null;
   if (Array.isArray(value)) {
     const strings = value.map(String).map((s) => s.trim()).filter(Boolean);
     if (field.type === "weekdays") return WEEKDAYS.filter((d) => strings.includes(d));
+    if (field.type === "dates") return normaliseDates(strings);
     if (field.type === "multi") return (field.options ?? []).filter((o) => strings.some((s) => s.toLowerCase() === o.toLowerCase()));
     if (field.type === "list") return [...new Set(strings)];
     return strings.join(", ") || null;

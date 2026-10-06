@@ -1,7 +1,9 @@
 import { call } from "../../../lib/server";
+import { formatDateValue, parseDateValue } from "@/engine/dates";
 
 function show(v: unknown) {
-  return Array.isArray(v) ? v.join(", ") : v == null ? "" : String(v);
+  if (Array.isArray(v)) return v.map((x) => (parseDateValue(String(x)) ? formatDateValue(String(x)) : x)).join(", ");
+  return v == null ? "" : String(v);
 }
 
 export default async function People({ params }: { params: Promise<{ spaceId: string }> }) {

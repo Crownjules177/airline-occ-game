@@ -216,11 +216,15 @@ export const getSpace = defineTool({
         stages: template.stages,
         eventNoun: template.act.eventNoun,
         taskNoun: template.act.taskNoun,
+        unavailableField: template.proposal.unavailableField ?? null,
       },
       me: { participantId: me.id, displayName: me.displayName, role: me.role, isHost },
       progress: {
         intake: intake?.status ?? "not_started",
         profile: mine?.status ?? "none",
+        // An approved profile from before the template asked for dates, never answered since.
+        needsAwayDates:
+          !!template.proposal.unavailableField && mine?.status === "approved" && !(template.proposal.unavailableField in mine.fields),
         openProposals: openProposals.n,
         respondedProposals: myResponses.n,
       },
@@ -248,8 +252,14 @@ export const hostOverview = defineTool({
       : [];
     const profs = await ctx.db.select().from(profiles).where(eq(profiles.spaceId, spaceId));
     const inviteUrl = `${ctx.appUrl}/join/${space.inviteCode}`;
+    const awayKey = template.proposal.unavailableField;
     return {
       inviteUrl,
+      awayDatesWhatsapp: awayKey
+        ? whatsappShareUrl(
+            `Quick one for our ${template.name.toLowerCase()}: please add any dates you already know you can't make (holidays, trips, busy weeks). It takes a minute, and nobody sees who's away, only how many: ${ctx.appUrl}/s/${space.id}/profile#field-${awayKey}`,
+          )
+        : null,
       inviteWhatsapp: whatsappShareUrl(
         `Join our ${template.name.toLowerCase()} "${space.name}". A short chat about what your ${template.unitLabel.singular} likes, then we plan together: ${inviteUrl}`,
       ),
@@ -262,6 +272,12 @@ export const hostOverview = defineTool({
         joinedAt: p.createdAt,
         intake: intakes.find((i) => i.participantId === p.id)?.status ?? "not_started",
         profile: profs.find((x) => x.participantId === p.id)?.status ?? "none",
+        // Whether they've answered, never the dates themselves.
+        awayDatesAnswered: (() => {
+          const key = template.proposal.unavailableField;
+          const prof = profs.find((x) => x.participantId === p.id);
+          return key ? !!prof && key in prof.fields : null;
+        })(),
       })),
     };
   },

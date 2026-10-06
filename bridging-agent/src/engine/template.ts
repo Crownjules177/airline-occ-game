@@ -21,7 +21,7 @@ const FieldSchema = z
     key: z.string().regex(/^[a-z][a-z0-9_]*$/),
     label: z.string(),
     description: z.string(),
-    type: z.enum(["text", "list", "choice", "multi", "number", "weekdays"]),
+    type: z.enum(["text", "list", "choice", "multi", "number", "weekdays", "dates"]),
     options: z.array(z.string()).optional(),
     defaultVisibility: z.enum(VISIBILITIES),
     /** hard: enforced in every proposal, surfaced only as anonymous constraints. soft: a preference. */
@@ -80,6 +80,8 @@ export const TemplateSchema = z
       maxOccurrences: z.number().int().positive(),
       /** Field whose weekday values describe availability; used to aggregate schedule overlap. */
       availabilityField: z.string().optional(),
+      /** Field holding specific dates a participant can't make (type "dates"). */
+      unavailableField: z.string().optional(),
       /** Field whose shared values make good themes (e.g. cuisines). */
       themeField: z.string().optional(),
       /** Field whose values say which parts a participant enjoys; used to suggest assignments. */
@@ -103,7 +105,7 @@ export const TemplateSchema = z
         if (!keys.has(k)) ctx.addIssue({ code: "custom", message: `topic ${topic.id} references unknown field ${k}` });
       }
     }
-    for (const k of [t.proposal.availabilityField, t.proposal.partsField, t.proposal.themeField]) {
+    for (const k of [t.proposal.availabilityField, t.proposal.partsField, t.proposal.themeField, t.proposal.unavailableField]) {
       if (k && !keys.has(k)) ctx.addIssue({ code: "custom", message: `proposal references unknown field ${k}` });
     }
   });

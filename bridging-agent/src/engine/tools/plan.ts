@@ -7,6 +7,8 @@ import { suggestAssignments } from "../assign";
 import { canSee } from "../visibility";
 import { buildCalendar, type IcsEvent } from "../ics";
 import { getTemplate } from "../template";
+import { loadGroup } from "../group";
+import { isAway } from "../dates";
 
 async function currentPlan(ctx: ToolContext, spaceId: string) {
   const [plan] = await ctx.db
@@ -37,6 +39,9 @@ export const getPlan = defineTool({
     const order = (part: string) => proposal.parts.indexOf(part);
     const suggestions = suggestAssignments({ template, timezone: space.settings.timezone, events: evs, commitments: cs, participants: people, profiles: profs });
     const viewer = { participantId: me.id, isHost };
+    const group = await loadGroup(ctx.db, spaceId, template);
+    const myAway = group.unavailable.get(me.id) ?? [];
+    const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: space.settings.timezone, year: "numeric", month: "2-digit", day: "2-digit" });
     const name = (id: string | null) => people.find((p) => p.id === id)?.displayName ?? null;
     return {
       plan,
@@ -45,6 +50,9 @@ export const getPlan = defineTool({
       taskNoun: template.act.taskNoun,
       events: evs.map((e) => ({
         ...e,
+        // How many households have said they can't make it (anonymous), and whether the caller has.
+        away: group.awayCount(localDate.format(e.startsAt)),
+        meAway: isAway(localDate.format(e.startsAt), myAway),
         commitments: cs
           .filter((c) => c.eventId === e.id)
           .sort((a, b) => order(a.part) - order(b.part))

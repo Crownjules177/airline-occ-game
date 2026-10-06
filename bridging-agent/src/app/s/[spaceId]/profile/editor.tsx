@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { ErrorNote, useTool } from "../../../components/tool";
+import { DatesInput } from "./dates-input";
 
-type Field = { key: string; label: string; description: string; type: string; options?: string[]; example?: string; constraint?: string };
+type Field = { key: string; label: string; description: string; type: string; options?: string[]; example?: string; constraint?: string; defaultVisibility: Entry["visibility"] };
 type Entry = { value: string | number | string[] | null; visibility: "group" | "host" | "agent" };
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -32,7 +33,7 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
     () =>
       Object.fromEntries(
         fields.map((f) => {
-          const e = values[f.key] ?? { value: null, visibility: "group" };
+          const e = values[f.key] ?? { value: null, visibility: f.defaultVisibility };
           const textual = ["text", "number", "list"].includes(f.type);
           return [f.key, { value: textual ? text[f.key] : e.value, visibility: e.visibility }];
         }),
@@ -42,7 +43,8 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
 
   const set = (key: string, patch: Partial<Entry>) => {
     setSaved(false);
-    setValues((v) => ({ ...v, [key]: { ...(v[key] ?? { value: null, visibility: "group" }), ...patch } }));
+    const def = fields.find((f) => f.key === key)!;
+    setValues((v) => ({ ...v, [key]: { ...(v[key] ?? { value: null, visibility: def.defaultVisibility }), ...patch } }));
   };
   const toggle = (key: string, option: string) => {
     const current = (values[key]?.value as string[] | null) ?? [];
@@ -77,10 +79,10 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
       </div>
 
       {fields.map((f) => {
-        const entry = values[f.key] ?? { value: null, visibility: "group" };
+        const entry = values[f.key] ?? { value: null, visibility: f.defaultVisibility };
         const id = `f-${f.key}`;
         return (
-          <fieldset key={f.key} className="card" style={{ margin: "0 0 12px" }}>
+          <fieldset key={f.key} id={`field-${f.key}`} className="card" style={{ margin: "0 0 12px", scrollMarginTop: 16 }}>
             <legend className="sr-only">{f.label}</legend>
             <div className="field">
               {["text", "number", "list"].includes(f.type) ? (
@@ -100,6 +102,14 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
                     placeholder={f.example}
                     onChange={(e) => (setSaved(false), setText((t) => ({ ...t, [f.key]: e.target.value })))}
                   />
+                </>
+              ) : f.type === "dates" ? (
+                <>
+                  <span style={{ fontWeight: 600 }}>{f.label}</span>
+                  <span className="hint">{f.description}</span>
+                  <div style={{ marginTop: 8 }}>
+                    <DatesInput id={id} value={(entry.value as string[] | null) ?? []} onChange={(v) => set(f.key, { value: v })} />
+                  </div>
                 </>
               ) : f.type === "choice" ? (
                 <>
@@ -146,6 +156,11 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
             {f.constraint === "hard" && (
               <p className="hint" style={{ marginTop: 6 }}>
                 Every plan respects this. It only ever appears as an unnamed constraint, like "no nuts in this meal".
+              </p>
+            )}
+            {f.type === "dates" && (
+              <p className="hint" style={{ marginTop: 6 }}>
+                Used to pick dates. Unless you share it, others only see how many households are away on a date, never who.
               </p>
             )}
           </fieldset>

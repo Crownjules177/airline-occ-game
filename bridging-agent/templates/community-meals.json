@@ -27,6 +27,7 @@
       { "id": "allergies", "question": "Any food allergies? These stay private: I only ever show them as a constraint like \"no nuts in this meal\", never linked to your household.", "fieldKeys": ["allergies"] },
       { "id": "cooking", "question": "How confident do you feel cooking for a group, and which parts of a meal do you most enjoy making?", "fieldKeys": ["cooking_confidence", "parts_enjoyed"] },
       { "id": "schedule", "question": "Which weeknights could you usually make a shared dinner?", "fieldKeys": ["free_weeknights"] },
+      { "id": "away", "question": "Are there any dates in the next few months you already know you can't make, like holidays, trips or busy weeks? Only the number of households away is ever shown, never who.", "fieldKeys": ["unavailable_dates"] },
       { "id": "learn", "question": "Last one: is there anything you'd love to learn to cook, or to learn from a neighbour?", "fieldKeys": ["want_to_learn"] }
     ]
   },
@@ -40,6 +41,7 @@
     { "key": "cooking_confidence", "label": "Cooking confidence", "description": "How confident the household feels cooking for a group.", "type": "choice", "options": ["Beginner", "Comfortable", "Confident", "Love it"], "defaultVisibility": "group" },
     { "key": "parts_enjoyed", "label": "Parts they enjoy making", "description": "Which parts of a meal the household enjoys making. A meal can be split by course (main, side, dessert) or by component (protein, carb, veg).", "type": "multi", "options": ["Main", "Side", "Salad", "Dessert", "Protein", "Carb", "Veg", "Bread", "Drinks"], "defaultVisibility": "group" },
     { "key": "free_weeknights", "label": "Free weeknights", "description": "Weeknights the household could usually make a shared dinner.", "type": "weekdays", "defaultVisibility": "group" },
+    { "key": "unavailable_dates", "label": "Dates you can't make", "description": "Specific dates or date ranges the household already knows it can't make, such as holidays, trips or busy weeks. Used to pick meal dates; others only see how many households are away on a date.", "type": "dates", "defaultVisibility": "agent" },
     { "key": "want_to_learn", "label": "Would love to learn", "description": "Dishes or skills the household would love to learn, possibly from a neighbour.", "type": "list", "defaultVisibility": "group", "example": "Dumplings" }
   ],
   "map": {
@@ -60,6 +62,7 @@
     "cadences": ["weekly", "fortnightly", "monthly"],
     "maxOccurrences": 6,
     "availabilityField": "free_weeknights",
+    "unavailableField": "unavailable_dates",
     "themeField": "cuisines_loved",
     "partsField": "parts_enjoyed"
   },
