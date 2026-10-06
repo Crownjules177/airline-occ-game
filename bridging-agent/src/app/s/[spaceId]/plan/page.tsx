@@ -52,6 +52,12 @@ export default async function PlanPage({ params }: { params: Promise<{ spaceId: 
               </span>
             </div>
             {e.theme && <p className="small">Theme: {e.theme}</p>}
+            {(e.meAway || e.away > 0) && (
+              <p className="small">
+                {e.meAway && <span className="pill bad">You said you're away</span>}{" "}
+                {e.away > 0 && <span className="pill warn">{e.away} away</span>}
+              </p>
+            )}
             <div className="parts">
               {e.commitments.map((c: any) => (
                 <div key={c.id} className={`part${c.mine ? " mine" : ""}`}>

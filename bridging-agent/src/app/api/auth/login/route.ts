@@ -8,6 +8,6 @@ export async function POST(req: Request) {
   if (typeof email !== "string" || !email.includes("@")) {
     return NextResponse.json({ ok: false, error: "Enter your email address." }, { status: 400 });
   }
-  const { devLink } = await requestEmailLink(await getDb(), { email, appUrl: appUrl(), redirectTo: next });
-  return NextResponse.json({ ok: true, devLink });
+  const { devLink, emailEnabled } = await requestEmailLink(await getDb(), { email, appUrl: appUrl(), redirectTo: next });
+  return NextResponse.json({ ok: true, devLink, emailEnabled });
 }

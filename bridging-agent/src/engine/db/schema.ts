@@ -185,6 +185,8 @@ export type Schedule = {
   startDate: string; // YYYY-MM-DD, local to the space
   occurrences: number;
   time: string; // HH:MM
+  /** Dates in the cadence that are skipped (e.g. too many households away); later dates fill in. */
+  skipDates?: string[];
 };
 
 export type ProposalStatus = "draft" | "open" | "agreed" | "dropped" | "superseded";

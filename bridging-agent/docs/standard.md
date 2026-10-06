@@ -46,6 +46,8 @@ Implementations must enforce this on the server, independent of any prompt: read
 
 Intake → Map → Agree → Act → Sustain, with Bridge running across the later stages and Sustain looping back to the Map as preferences change. See the skill for what each stage does and the rules the agent follows in it.
 
+Proposals carry concrete dates. Specific dates people can't make are only ever used as anonymous counts per date: options start and skip dates to avoid them, each proposal states the remaining absences, and nobody is suggested for a task on a date they can't make.
+
 Agreement signals are `support`, `live_with` and `object` (with a reason). A proposal with an outstanding objection cannot be recorded as agreed; it is revised instead.
 
 ## 5. Templates
@@ -55,9 +57,9 @@ A template is a JSON document validated against `TemplateSchema` (`src/engine/te
 - the participant unit and labels, group size and timezone;
 - stages (label, description, enabled);
 - intake topics, each mapped to profile fields;
-- profile fields: key, label, description, type (`text`, `list`, `choice`, `multi`, `number`, `weekdays`), options, default visibility, and whether the field is a `hard` or `soft` constraint;
+- profile fields: key, label, description, type (`text`, `list`, `choice`, `multi`, `number`, `weekdays`, `dates`: ISO days or `from/to` ranges), options, default visibility, and whether the field is a `hard` or `soft` constraint;
 - map output kinds and the approval threshold;
-- proposal guidance, default parts, cadences, maximum occurrences, and which fields carry availability, themes and preferred parts;
+- proposal guidance, default parts, cadences, maximum occurrences, and which fields carry availability, dates people can't make, themes and preferred parts;
 - event and task nouns, default time, duration and location;
 - sustain cadence and channels.
 

@@ -1,4 +1,5 @@
 import { call } from "../../../lib/server";
+import { formatDateValue } from "@/engine/dates";
 import { ToolButton } from "../../../components/tool";
 import { Respond } from "./respond";
 import { EditProposal } from "./edit";
@@ -14,8 +15,12 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 function when(s: any) {
   const every = s.cadence === "weekly" ? "Every" : s.cadence === "fortnightly" ? "Every second" : "Once a month on a";
   const start = new Date(`${s.startDate}T00:00:00Z`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-  return `${every} ${s.weekday} at ${s.time}, ${s.occurrences} times, from ${start}`;
+  const skips = s.skipDates?.length ? ` (skipping ${s.skipDates.map(formatDateValue).join(", ")})` : "";
+  return `${every} ${s.weekday} at ${s.time}, ${s.occurrences} times, from ${start}${skips}`;
 }
+
+const dayLabel = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 
 export default async function Proposals({ params }: { params: Promise<{ spaceId: string }> }) {
   const { spaceId } = await params;
@@ -61,6 +66,22 @@ export default async function Proposals({ params }: { params: Promise<{ spaceId:
             <dl className="kv small">
               <dt>When</dt>
               <dd>{when(p.schedule)}</dd>
+              <dt>Dates</dt>
+              <dd>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {p.dates.map((d: any) => (
+                    <li key={d.date}>
+                      {dayLabel(d.date)}{" "}
+                      {d.meAway && <span className="pill bad">you're away</span>}{" "}
+                      {d.away > 0 && (
+                        <span className="pill warn">
+                          {d.away} {d.away === 1 ? space.template.unit.singular : space.template.unit.plural} away
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
               {p.themes.length > 0 && (
                 <>
                   <dt>Themes</dt>

@@ -6,6 +6,7 @@ import { intakeSessions, profileRevisions, profiles, type TranscriptMessage } fr
 import { intakeOpening, intakeTurn, profileDraft } from "../agent/stages";
 import { fieldsWithDefaults } from "../values";
 import { newId } from "../ids";
+import { localToday } from "../schedule";
 import type { Member } from "../context";
 
 async function loadOrStart(ctx: ToolContext, m: Member) {
@@ -52,7 +53,7 @@ export const sendIntakeMessage = defineTool({
     const { output } = await ctx.agent.run(intakeTurn, {
       spaceId,
       template: m.template,
-      input: { displayName: m.me.displayName, transcript: messages, topicsCovered: row.topicsCovered },
+      input: { today: localToday(ctx.now, m.space.settings.timezone), displayName: m.me.displayName, transcript: messages, topicsCovered: row.topicsCovered },
     });
     messages.push({ role: "agent", text: output.reply, at: new Date().toISOString() });
     const topics = [...new Set([...row.topicsCovered, ...output.topicsCovered])];
@@ -79,7 +80,7 @@ export const draftMyProfile = defineTool({
     const { output } = await ctx.agent.run(profileDraft, {
       spaceId,
       template: m.template,
-      input: { displayName: m.me.displayName, transcript: row.messages },
+      input: { today: localToday(ctx.now, m.space.settings.timezone), displayName: m.me.displayName, transcript: row.messages },
     });
 
     const [existing] = await ctx.db.select().from(profiles).where(eq(profiles.participantId, m.me.id));

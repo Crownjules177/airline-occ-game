@@ -9,6 +9,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
   const [devLink, setDevLink] = useState<string | null>(null);
+  const [emailEnabled, setEmailEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   return (
@@ -17,7 +18,17 @@ function LoginForm() {
       {params.get("expired") && <p className="notice">That link has expired or was already used. Ask for a new one below.</p>}
       {state === "sent" ? (
         <div className="card stack">
-          <p>If that email belongs to a member, a sign-in link is on its way. It works once, for 15 minutes.</p>
+          {emailEnabled ? (
+            <p>If that email belongs to a member, a sign-in link is on its way. It works once, for 15 minutes.</p>
+          ) : (
+            <>
+              <p>Email sign-in isn't switched on for this site yet, so no email was sent.</p>
+              <p>
+                To get in, use the personal sign-in link you saved when you joined. New here? Open your invite link, or{" "}
+                <a href="/new">start a space</a>.
+              </p>
+            </>
+          )}
           {devLink && (
             <p className="notice small">
               Email isn't set up on this server, so here's the link (development only): <a href={devLink}>sign in</a>
@@ -43,6 +54,7 @@ function LoginForm() {
               return;
             }
             setDevLink(body.devLink ?? null);
+            setEmailEnabled(body.emailEnabled !== false);
             setState("sent");
           }}
         >

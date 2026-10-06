@@ -4,6 +4,9 @@ import { contributions, participants, profiles, type Participant, type Profile }
 import type { Template, Weekday } from "./template";
 import { formatValue, hardConstraints, isEmpty, valuesOf } from "./values";
 import type { SharedContribution } from "./agent/stages";
+import { isAway } from "./dates";
+import { addDays } from "./schedule";
+import type { AwayCounts } from "./availability";
 
 /** Group state the agent works from. Only shared (group-visible) content is attributed. */
 export async function loadGroup(db: DB, spaceId: string, template: Template) {
@@ -40,8 +43,33 @@ export async function loadGroup(db: DB, spaceId: string, template: Template) {
     }
   }
 
+  // Specific dates each approved household can't make. Only ever used as anonymous counts.
+  const unavailable = new Map<string, string[]>();
+  const awayKey = template.proposal.unavailableField;
+  if (awayKey) {
+    for (const p of approved) {
+      const v = valuesOf(p.fields[awayKey]?.value ?? null);
+      if (v.length) unavailable.set(p.participantId, v);
+    }
+  }
+  const awayCount = (date: string) => [...unavailable.values()].filter((v) => isAway(date, v)).length;
+  /** Away counts for every date from `from` for `days` days, keeping only dates with someone away. */
+  const awayCounts = (from: string, days = 180): AwayCounts => {
+    const out: AwayCounts = {};
+    if (!unavailable.size) return out;
+    for (let i = 0; i < days; i++) {
+      const d = addDays(from, i);
+      const n = awayCount(d);
+      if (n) out[d] = n;
+    }
+    return out;
+  };
+
   return {
     people,
+    unavailable,
+    awayCount,
+    awayCounts,
     profiles: profs,
     approved,
     shared,

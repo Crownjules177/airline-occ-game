@@ -52,9 +52,10 @@ export async function endSession(db: DB, token: string | undefined) {
 export async function requestEmailLink(
   db: DB,
   opts: { email: string; appUrl: string; redirectTo?: string; now?: Date },
-): Promise<{ devLink?: string }> {
+): Promise<{ devLink?: string; emailEnabled: boolean }> {
+  const emailEnabled = !!process.env.RESEND_API_KEY;
   const account = await findAccountByEmail(db, opts.email);
-  if (!account) return {}; // Same response either way, so emails can't be probed.
+  if (!account) return { emailEnabled }; // Same response either way, so emails can't be probed.
   const token = newToken();
   const now = opts.now ?? new Date();
   await db.insert(loginTokens).values({
@@ -70,7 +71,7 @@ export async function requestEmailLink(
     subject: "Your sign-in link",
     text: `Hi ${account.name},\n\nTap to sign in (valid for 15 minutes):\n${link}\n\nIf you didn't ask for this, ignore this email.`,
   });
-  return delivered || process.env.NODE_ENV === "production" ? {} : { devLink: link };
+  return delivered || process.env.NODE_ENV === "production" ? { emailEnabled } : { emailEnabled, devLink: link };
 }
 
 /** Create (or rotate) the caller's personal sign-in link. Older personal links stop working. */
