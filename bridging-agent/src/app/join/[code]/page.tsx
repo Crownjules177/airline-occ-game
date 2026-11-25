@@ -2,9 +2,17 @@ import { redirect } from "next/navigation";
 import { ToolError } from "@/engine/context";
 import { call, getCtx } from "../../lib/server";
 import { JoinForm } from "./form";
+import { GetBackIn } from "./get-back-in";
 
-export default async function Join({ params }: { params: Promise<{ code: string }> }) {
+export default async function Join({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ code: string }>;
+  searchParams: Promise<{ back?: string }>;
+}) {
   const { code } = await params;
+  const { back } = await searchParams;
   const ctx = await getCtx();
   let invite: any;
   try {
@@ -29,7 +37,25 @@ export default async function Join({ params }: { params: Promise<{ code: string 
         </p>
         {household && <p>One sign-in per household. Include everyone's needs, kids too.</p>}
       </div>
-      <JoinForm code={code} household={household} signedIn={!!ctx.accountId} spaceId={invite.spaceId} />
+      {!ctx.accountId && invite.households.length > 0 && (
+        <GetBackIn
+          code={code}
+          spaceId={invite.spaceId}
+          hostName={invite.hostName}
+          households={invite.households}
+          emailEnabled={invite.emailEnabled}
+          unit={invite.template.unit}
+          open={!!back}
+        />
+      )}
+      <h2>New here? Join</h2>
+      <JoinForm
+        code={code}
+        household={household}
+        signedIn={!!ctx.accountId}
+        spaceId={invite.spaceId}
+        emailEnabled={invite.emailEnabled}
+      />
     </>
   );
 }

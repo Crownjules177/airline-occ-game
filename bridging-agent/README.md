@@ -15,6 +15,7 @@ This is the Phase 1 MVP from the requirements: enough to run the first meal cycl
 | Space setup, invites via WhatsApp share links | ✓ |
 | Home-screen circle: households as painted circles you can move, with names, tastes and shared threads | ✓ |
 | Magic-link login, no app install | ✓ Personal sign-in links (shared to yourself on WhatsApp). Emailed links once `RESEND_API_KEY` is set. |
+| Getting back in | ✓ From the invite link: "Already joined? Get back in" emails a fresh link, or (no email) asks the host, who approves on the Host page and only the device that asked is signed in. Households can add an email and sign out other devices on **My data**. Re-joining under an existing name is caught. |
 | Intake chat (typed or dictated, pause and resume) | ✓ |
 | Agent-drafted profile; review, edit, per-field visibility, approve | ✓ with full edit history |
 | Group map with provenance and minority views; flag and revise | ✓ |
@@ -85,7 +86,7 @@ src/app/              Next.js mobile-first web app. Reads call tools in-process;
 | Transparent representation | Profiles are private drafts until approved; every field is editable; full revision history. |
 | Preserve difference | Map prompt and schema include `minority` items; the mock and the prompt keep single-household views as their own items. |
 | Provenance | Only group-visible, approved profile answers and ideas become citable contributions. Map and proposal citations are filtered to real ids on the server. Revisions always cite the objections they answer. |
-| Privacy (visibility) | `visibility.ts` filters every read. Hard constraints are aggregated without names. `leaksPrivate()` drops agent output that places a name next to that person's private value. Hosts can't issue sign-in links for others, so they can't sign in as a participant. |
+| Privacy (visibility) | `visibility.ts` filters every read. Hard constraints are aggregated without names. `leaksPrivate()` drops agent output that places a name next to that person's private value. Hosts can't issue sign-in links for others, so they can't sign in as a participant. When a host approves a "get back in" request, the session goes to the device that asked (its secret is an httpOnly cookie there), never to the host, and the household sees a note that it happened. |
 | Hard constraints | Attached to every proposal from the data, not the model. Themes that break a constraint are replaced on the server. |
 | Minimal data, export, delete | `export_my_data`, `delete_my_data`. Contact email is optional. |
 | Channel-agnostic | `notify.ts` adapters: WhatsApp share links now, email via Resend, more later. |

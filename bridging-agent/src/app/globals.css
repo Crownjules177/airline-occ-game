@@ -237,7 +237,7 @@ nav.tabs a[aria-current="page"] { --w: var(--teal); --w-strength: 30%; color: va
 .tally { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .signals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .signals button { padding: 8px 6px; font-size: 0.9rem; }
-.signals button[aria-pressed="true"] { background: color-mix(in srgb, var(--teal) 30%, transparent); border-color: var(--teal); }
+.toggle button[aria-pressed="true"], .signals button[aria-pressed="true"] { background: color-mix(in srgb, var(--teal) 30%, transparent); border-color: var(--teal); }
 
 /* ---- Plan ---------------------------------------------------------------------------------- */
 .parts { display: grid; gap: 10px; margin-top: 12px; }

@@ -1,5 +1,5 @@
 import { call } from "../../../lib/server";
-import { CopyButton } from "../../../components/tool";
+import { CopyButton, ToolButton } from "../../../components/tool";
 import { Settings } from "./settings";
 
 const STATUS: Record<string, string> = {
@@ -17,6 +17,35 @@ export default async function Host({ params }: { params: Promise<{ spaceId: stri
   const [o, log] = await Promise.all([call("host_overview", { spaceId }), call("get_audit_log", { spaceId, limit: 50 })]);
   return (
     <>
+      {o.accessRequests.length > 0 && (
+        <div className="card accent stack" id="access">
+          <h3>Asking to get back in</h3>
+          <p className="small">
+            {o.accessRequests.length === 1 ? "This household" : "These households"} lost their way in and asked from the invite page.
+            Only approve if you know it's them (a message from them, or they're next to you). Approving signs in the phone that
+            asked, nothing else; you never see a link, and they get a note that it happened.
+          </p>
+          {o.accessRequests.map((r: any) => (
+            <div key={r.id} className="spread">
+              <span>
+                <strong>{r.householdName}</strong>{" "}
+                <span className="muted small">
+                  asked {new Date(r.createdAt).toLocaleString("en-AU", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: o.settings.timezone })}
+                </span>
+              </span>
+              <span className="row">
+                <ToolButton tool="decide_access_request" input={{ spaceId, requestId: r.id, approve: true }} className="primary small" busyLabel="Approving…">
+                  Approve
+                </ToolButton>
+                <ToolButton tool="decide_access_request" input={{ spaceId, requestId: r.id, approve: false }} className="small" busyLabel="Declining…">
+                  Decline
+                </ToolButton>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="card stack">
         <h3>Invite people</h3>
         <p className="small">

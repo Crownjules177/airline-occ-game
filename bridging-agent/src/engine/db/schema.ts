@@ -280,6 +280,27 @@ export const connections = pgTable("connections", {
   createdAt: createdAt(),
 });
 
+// ---- Getting back in ------------------------------------------------------------------------
+
+export type AccessRequestStatus = "pending" | "approved" | "declined" | "used" | "expired";
+
+/**
+ * A household without a sign-in email asking to get back in from a new device. The host approves
+ * it, but only the device that asked (holding the secret behind tokenHash) is let in, so the host
+ * never handles a sign-in link. The household is told afterwards.
+ */
+export const accessRequests = pgTable("access_requests", {
+  id: id(),
+  spaceId: text("space_id").notNull().references(() => spaces.id, { onDelete: "cascade" }),
+  participantId: text("participant_id").notNull().references(() => participants.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  status: text("status").$type<AccessRequestStatus>().notNull().default("pending"),
+  decidedBy: text("decided_by"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
 // ---- Audit ----------------------------------------------------------------------------------
 
 /** Every agent call, with the prompt version, inputs and outputs (audit rule, NFR5). */
@@ -319,3 +340,4 @@ export type ProposalResponse = typeof proposalResponses.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type EventRow = typeof events.$inferSelect;
 export type Commitment = typeof commitments.$inferSelect;
+export type AccessRequest = typeof accessRequests.$inferSelect;

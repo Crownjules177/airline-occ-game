@@ -109,3 +109,12 @@ export async function consumeLinkToken(db: DB, token: string, now = new Date()) 
 function safeRedirect(path: string | undefined) {
   return path && path.startsWith("/") && !path.startsWith("//") ? path : null;
 }
+
+/** Sign out everywhere except this device: other sessions end and old sign-in links stop working. */
+export async function endOtherSessions(db: DB, accountId: string, keepToken: string) {
+  const keep = hashToken(keepToken);
+  const others = await db.select({ idHash: sessions.idHash }).from(sessions).where(eq(sessions.accountId, accountId));
+  for (const s of others) if (s.idHash !== keep) await db.delete(sessions).where(eq(sessions.idHash, s.idHash));
+  await db.delete(loginTokens).where(eq(loginTokens.accountId, accountId));
+  return { ended: others.filter((s) => s.idHash !== keep).length };
+}
