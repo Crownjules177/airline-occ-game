@@ -6,6 +6,7 @@ import {
   accounts,
   commitments,
   contributions,
+  eventAttendance,
   intakeSessions,
   participants,
   profileRevisions,
@@ -33,6 +34,7 @@ export const exportMyData = defineTool({
       contributions: await ctx.db.select().from(contributions).where(eq(contributions.participantId, me.id)),
       proposalResponses: await ctx.db.select().from(proposalResponses).where(eq(proposalResponses.participantId, me.id)),
       commitments: await ctx.db.select().from(commitments).where(eq(commitments.participantId, me.id)),
+      dateAnswers: await ctx.db.select().from(eventAttendance).where(eq(eventAttendance.participantId, me.id)),
     };
   },
 });

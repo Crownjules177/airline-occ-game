@@ -323,3 +323,9 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.8rem; backgro
 }
 .circle-who { margin-top: 6px; text-align: center; }
 .circle-who > summary { display: inline-block; color: var(--ink-soft); font-size: 0.95rem; padding: 6px 10px; }
+
+/* Plan dates */
+section.card.skipped { opacity: 0.65; }
+.change-date > summary { font-weight: 600; color: var(--ink-soft); }
+.change-date[open] > summary { margin-bottom: 8px; }
+button.option { justify-content: flex-start; text-align: left; width: 100%; }

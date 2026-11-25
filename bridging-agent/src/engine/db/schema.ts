@@ -240,6 +240,8 @@ export const plans = pgTable("plans", {
   createdAt: createdAt(),
 });
 
+export type EventStatus = "scheduled" | "skipped";
+
 export const events = pgTable("events", {
   id: id(),
   spaceId: text("space_id").notNull().references(() => spaces.id, { onDelete: "cascade" }),
@@ -249,7 +251,33 @@ export const events = pgTable("events", {
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   durationMinutes: integer("duration_minutes").notNull(),
   location: text("location").notNull(),
+  /** The host can skip a date without changing the rest of the plan. */
+  status: text("status").$type<EventStatus>().notNull().default("scheduled"),
+  /** Where the date was before the host first moved it. */
+  movedFrom: timestamp("moved_from", { withTimezone: true }),
 });
+
+export type Event = typeof events.$inferSelect;
+
+export type AttendanceStatus = "away" | "coming";
+
+/**
+ * A household's answer for one date: "can't make this one", or "actually we can" to override the
+ * away dates on their profile. Only counts are shown to the group, never who.
+ */
+export const eventAttendance = pgTable(
+  "event_attendance",
+  {
+    id: id(),
+    spaceId: text("space_id").notNull().references(() => spaces.id, { onDelete: "cascade" }),
+    eventId: text("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+    participantId: text("participant_id").notNull().references(() => participants.id, { onDelete: "cascade" }),
+    status: text("status").$type<AttendanceStatus>().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("event_attendance_event_participant").on(t.eventId, t.participantId)],
+);
+export type EventAttendance = typeof eventAttendance.$inferSelect;
 
 export type CommitmentStatus = "open" | "claimed" | "done" | "missed";
 

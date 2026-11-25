@@ -1,5 +1,6 @@
 import { call } from "../../../lib/server";
 import { CopyButton, ToolButton } from "../../../components/tool";
+import { ChangeDate, MyAnswer } from "./date-controls";
 
 export default async function PlanPage({ params }: { params: Promise<{ spaceId: string }> }) {
   const { spaceId } = await params;
@@ -12,6 +13,9 @@ export default async function PlanPage({ params }: { params: Promise<{ spaceId: 
   const fmtTime = new Intl.DateTimeFormat("en-AU", { timeZone: tz, hour: "numeric", minute: "2-digit" });
   const webcal = data.feedUrl.replace(/^https?:/, "webcal:");
   const mine = data.events.flatMap((e: any) => e.commitments).filter((c: any) => c.mine).length;
+  const fmtShort = new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "short", day: "numeric", month: "short" });
+  const fmtHm = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const needs = data.events.filter((e: any) => e.attention.length);
 
   return (
     <>
@@ -25,6 +29,22 @@ export default async function PlanPage({ params }: { params: Promise<{ spaceId: 
         )}
         <p className="small muted">Plan version {data.plan.version}</p>
       </div>
+
+      {data.isHost && needs.length > 0 && (
+        <div className="card accent stack">
+          <h3>
+            {needs.length === 1 ? "1 date needs" : `${needs.length} dates need`} a look
+          </h3>
+          <ul className="small">
+            {needs.map((e: any) => (
+              <li key={e.id}>
+                <a href={`#e-${e.id}`}>{fmtShort.format(new Date(e.startsAt))}</a>: {e.attention.join("; ")}
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">Open "Change this date" on it to find a day more people can make, or skip it.</p>
+        </div>
+      )}
 
       <div className="card stack">
         <h3>Put it in your calendar</h3>
@@ -43,21 +63,45 @@ export default async function PlanPage({ params }: { params: Promise<{ spaceId: 
 
       {data.events.map((e: any) => {
         const start = new Date(e.startsAt);
+        const skipped = e.status === "skipped";
+        const myParts = e.commitments.filter((c: any) => c.mine && c.status === "claimed").map((c: any) => c.part);
         return (
-          <section key={e.id} className="card">
+          <section key={e.id} id={`e-${e.id}`} className={`card stack${skipped ? " skipped" : ""}`}>
             <div className="spread">
               <h3>{fmtDate.format(start)}</h3>
               <span className="muted small">
                 {fmtTime.format(start)} · {e.location}
               </span>
             </div>
+            {e.movedFrom && <p className="hint">Moved from {fmtShort.format(new Date(e.movedFrom))}</p>}
             {e.theme && <p className="small">Theme: {e.theme}</p>}
-            {(e.meAway || e.away > 0) && (
+            {skipped ? (
               <p className="small">
-                {e.meAway && <span className="pill bad">You said you're away</span>}{" "}
-                {e.away > 0 && <span className="pill warn">{e.away} away</span>}
+                <span className="pill">Skipped</span> <span className="muted">The host has taken this date out. The rest of the plan is unchanged.</span>
               </p>
+            ) : (
+              <>
+                <p className="small">
+                  <span className={`pill ${e.attention.length ? "warn" : "good"}`}>
+                    {e.coming} of {e.households} coming
+                  </span>
+                  {e.attention.length > 0 && <span className="muted"> {e.attention.join("; ")}</span>}
+                </p>
+                {e.upcoming && <MyAnswer spaceId={spaceId} eventId={e.id} meAway={e.meAway} myParts={myParts} noun={data.eventNoun} />}
+              </>
             )}
+            {data.isHost && e.upcoming && (
+              <ChangeDate
+                spaceId={spaceId}
+                eventId={e.id}
+                date={e.date}
+                time={fmtHm.format(start)}
+                skipped={skipped}
+                claimed={e.commitments.filter((c: any) => c.participantId).length}
+                open={false}
+              />
+            )}
+            {!skipped && (
             <div className="parts">
               {e.commitments.map((c: any) => (
                 <div key={c.id} className={`part${c.mine ? " mine" : ""}`}>
@@ -99,6 +143,7 @@ export default async function PlanPage({ params }: { params: Promise<{ spaceId: 
                 </div>
               ))}
             </div>
+            )}
           </section>
         );
       })}

@@ -22,6 +22,8 @@ export function suggestAssignments(opts: {
   commitments: Commitment[];
   participants: Participant[];
   profiles: Profile[];
+  /** Whether a household is away for an event; defaults to the away dates on their profile. */
+  awayFor?: (eventId: string, date: string, participantId: string) => boolean;
 }): Suggestion[] {
   const { template, events, commitments, participants, profiles } = opts;
   const partsKey = template.proposal.partsField;
@@ -55,7 +57,7 @@ export function suggestAssignments(opts: {
     for (const p of eligible) {
       const profile = profiles.find((x) => x.participantId === p.id)!;
       // Never suggest someone for a date they've said they can't make.
-      if (awayKey && isAway(date, valuesOf(profile.fields[awayKey]?.value ?? null))) continue;
+      if (opts.awayFor ? opts.awayFor(event.id, date, p.id) : awayKey && isAway(date, valuesOf(profile.fields[awayKey]?.value ?? null))) continue;
       const reasons: Suggestion["reasons"] = [];
       let score = -3 * load.get(p.id)!;
       if (busyAt.get(event.id)?.has(p.id)) score -= 10;

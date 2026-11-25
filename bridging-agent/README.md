@@ -15,6 +15,7 @@ This is the Phase 1 MVP from the requirements: enough to run the first meal cycl
 | Space setup, invites via WhatsApp share links | ✓ |
 | Home-screen circle: households as painted circles you can move, with names, tastes and shared threads | ✓ |
 | Magic-link login, no app install | ✓ Personal sign-in links (shared to yourself on WhatsApp). Emailed links once `RESEND_API_KEY` is set. |
+| Changing dates on an agreed plan | ✓ Each household can say "can't make this one" for a single date (their part is freed, with a WhatsApp message asking for cover). Every date shows how many can come (counts only), and dates too few can make are flagged for the host. The host can find better nearby dates, move a date or skip one; claimed parts move with it, and calendars update. |
 | Getting back in | ✓ From the invite link: "Already joined? Get back in" emails a fresh link, or (no email) asks the host, who approves on the Host page and only the device that asked is signed in. Households can add an email and sign out other devices on **My data**. Re-joining under an existing name is caught. |
 | Intake chat (typed or dictated, pause and resume) | ✓ |
 | Agent-drafted profile; review, edit, per-field visibility, approve | ✓ with full edit history |

@@ -48,6 +48,10 @@ const all: Tool[] = [
   plan.claimCommitment,
   plan.releaseCommitment,
   plan.completeCommitment,
+  plan.setMyAttendance,
+  plan.suggestEventDates,
+  plan.moveEvent,
+  plan.skipEvent,
   data.exportMyData,
   data.deleteMyData,
 ] as Tool[];
