@@ -51,6 +51,7 @@ Create a Resend account, verify a sending domain, then add `RESEND_API_KEY` and 
 
 ## Troubleshooting
 
+- **Build fails with "Couldn't apply database migrations":** on Supabase's free plan a project pauses after about a week without use. Restore it from the Supabase dashboard, then redeploy. Only production deploys migrate; preview builds of pull requests skip it so they can't change the live database.
 - **Build fails at "Migrations applied" / connection errors:** check `DATABASE_URL` uses port 6543 and the pooler host, and that the password has no brackets left in it.
 - **Links point to localhost:** `APP_URL` isn't set, or you didn't redeploy after setting it.
 - **An agent step times out:** check **Deployments → Functions** logs; each call is also in the host audit log with its error.
