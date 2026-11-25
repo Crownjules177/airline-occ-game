@@ -99,6 +99,8 @@ function fieldSchema(f: Template["profileFields"][number]) {
       return z.number().nullable().describe(d);
     case "list":
       return z.array(z.string()).describe(d);
+    case "names":
+      return z.array(z.string().describe("one person's first name")).describe(d);
     case "weekdays":
       return z.array(z.enum(WEEKDAYS)).describe(d);
     case "choice":
@@ -144,8 +146,9 @@ export const profileDraft: Stage<ProfileDraftInput, ProfileDraftOutput> = {
       }
     }
     const shared = t.profileFields
+      .filter((f) => ["list", "multi", "choice"].includes(f.type) && !f.constraint)
       .filter((f) => f.defaultVisibility === "group" && valuesOf(fields[f.key] ?? null).length > 0)
-      .slice(0, 4)
+      .slice(0, 3)
       .map((f) => `${f.label.toLowerCase()}: ${valuesOf(fields[f.key] ?? null).join(", ")}`);
     const summary = shared.length
       ? `${input.displayName}. ${shared.join("; ")}.`

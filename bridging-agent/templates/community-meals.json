@@ -20,7 +20,7 @@
     "intro": "Hi! I'm helping your building set up a shared meal. Everyone brings one part to the rooftop dining room and we eat together. I'll ask a few quick questions about your household, and you'll see and approve exactly how I summarise you before anyone else does. You can type or use your phone's dictation, and stop and come back any time.",
     "targetMinutes": 8,
     "topics": [
-      { "id": "household", "question": "Who's in your household, and how many people would be eating (adults and kids)?", "fieldKeys": ["household_size", "household_notes"] },
+      { "id": "household", "question": "Who's in your household (first names are lovely), and how many would be eating, adults and kids?", "fieldKeys": ["household_members", "household_size", "household_notes"] },
       { "id": "cuisines", "question": "What cuisines or dishes does your household love?", "fieldKeys": ["cuisines_loved"] },
       { "id": "avoid", "question": "Are there foods you'd rather avoid, even if they're not a strict requirement?", "fieldKeys": ["foods_avoided"] },
       { "id": "dietary", "question": "Any dietary requirements the meal must respect, such as vegetarian, halal, or no pork?", "fieldKeys": ["dietary_requirements"] },
@@ -32,6 +32,7 @@
     ]
   },
   "profileFields": [
+    { "key": "household_members", "label": "Who's in the household", "description": "First names of everyone in the household, kids included. Shown in the group circle so neighbours can greet you by name.", "type": "names", "defaultVisibility": "group", "example": "Ken, Kate, Maise, Ollie" },
     { "key": "household_size", "label": "People eating", "description": "Number of people in the household who would eat at shared meals.", "type": "number", "defaultVisibility": "group", "example": "4" },
     { "key": "household_notes", "label": "About the household", "description": "Who is in the household, in their own words (for example: two adults, kids aged 4 and 7).", "type": "text", "defaultVisibility": "group", "example": "Two adults, two kids (4 and 7)" },
     { "key": "cuisines_loved", "label": "Cuisines loved", "description": "Cuisines or dishes the household loves.", "type": "list", "defaultVisibility": "group", "example": "Vietnamese, Italian" },
@@ -72,6 +73,17 @@
     "defaultTime": "18:00",
     "durationMinutes": 120,
     "location": "Rooftop dining room"
+  },
+  "circle": {
+    "membersField": "household_members",
+    "sizeField": "household_size",
+    "highlights": [
+      { "field": "cuisines_loved", "label": "Loves" },
+      { "field": "parts_enjoyed", "label": "Likes making" },
+      { "field": "want_to_learn", "label": "Wants to learn" },
+      { "field": "cooking_confidence", "label": "In the kitchen" }
+    ],
+    "threadFields": ["cuisines_loved", "want_to_learn", "parts_enjoyed"]
   },
   "sustain": { "cadence": "per_event" },
   "channels": ["web", "whatsapp_link"]

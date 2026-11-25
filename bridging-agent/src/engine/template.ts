@@ -21,7 +21,7 @@ const FieldSchema = z
     key: z.string().regex(/^[a-z][a-z0-9_]*$/),
     label: z.string(),
     description: z.string(),
-    type: z.enum(["text", "list", "choice", "multi", "number", "weekdays", "dates"]),
+    type: z.enum(["text", "list", "names", "choice", "multi", "number", "weekdays", "dates"]),
     options: z.array(z.string()).optional(),
     defaultVisibility: z.enum(VISIBILITIES),
     /** hard: enforced in every proposal, surfaced only as anonymous constraints. soft: a preference. */
@@ -94,6 +94,18 @@ export const TemplateSchema = z
       durationMinutes: z.number().int().positive(),
       location: z.string(),
     }),
+    /** The home-screen circle: which shared answers each household's circle shows, and which link households. */
+    circle: z
+      .object({
+        /** Field with the names of the people in a participant (household members). */
+        membersField: z.string().optional(),
+        /** Number field for how many people a participant is, when names aren't given. */
+        sizeField: z.string().optional(),
+        highlights: z.array(z.object({ field: z.string(), label: z.string() })),
+        /** Fields whose shared values draw threads between participants. */
+        threadFields: z.array(z.string()),
+      })
+      .optional(),
     sustain: z.object({ cadence: z.enum(["per_event", "weekly_digest"]) }),
     channels: z.array(z.enum(["web", "whatsapp_link", "email"])).min(1),
   })
@@ -105,7 +117,9 @@ export const TemplateSchema = z
         if (!keys.has(k)) ctx.addIssue({ code: "custom", message: `topic ${topic.id} references unknown field ${k}` });
       }
     }
-    for (const k of [t.proposal.availabilityField, t.proposal.partsField, t.proposal.themeField, t.proposal.unavailableField]) {
+    const c = t.circle;
+    const circleKeys = c ? [c.membersField, c.sizeField, ...c.highlights.map((h) => h.field), ...c.threadFields] : [];
+    for (const k of [t.proposal.availabilityField, t.proposal.partsField, t.proposal.themeField, t.proposal.unavailableField, ...circleKeys]) {
       if (k && !keys.has(k)) ctx.addIssue({ code: "custom", message: `proposal references unknown field ${k}` });
     }
   });

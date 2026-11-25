@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { call } from "../../lib/server";
 import { IdeaForm } from "./idea-form";
+import { CircleView, type CircleData } from "./circle-view";
 
 const ORDER = ["intake", "map", "agree", "act", "sustain", "bridge"];
 
 export default async function SpaceHome({ params }: { params: Promise<{ spaceId: string }> }) {
   const { spaceId } = await params;
-  const s = await call("get_space", { spaceId });
+  const [s, circle] = await Promise.all([call("get_space", { spaceId }), call<CircleData>("get_circle", { spaceId })]);
   const base = `/s/${spaceId}`;
   const p = s.progress;
   const g = s.group;
@@ -49,6 +50,7 @@ export default async function SpaceHome({ params }: { params: Promise<{ spaceId:
   const current = ORDER.indexOf(s.space.stage);
   return (
     <>
+      <CircleView data={circle} profileHref={`${base}/profile`} />
       {next ? (
         <div className="card accent stack">
           <h3>{next.title}</h3>

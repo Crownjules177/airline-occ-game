@@ -1,7 +1,7 @@
 /** Answers for the community-meals intake, one per topic, in order. */
 export const answers: Record<string, string[]> = {
   Nguyen: [
-    "Two adults and two kids, so four of us",
+    "Ken and Kate, and our kids Maise and Ollie, so four of us",
     "Vietnamese, Italian and dumplings",
     "Very spicy food",
     "No pork",
@@ -12,7 +12,7 @@ export const answers: Record<string, string[]> = {
     "Sourdough bread",
   ],
   Patel: [
-    "Three of us",
+    "Priya, Raj and little Anika, three of us",
     "Indian, Vietnamese",
     "none",
     "Vegetarian",
@@ -23,7 +23,7 @@ export const answers: Record<string, string[]> = {
     "Dumplings",
   ],
   Okafor: [
-    "Five, three kids",
+    "Five of us: Chidi, Ada and the kids Tobi, Ife and Kemi",
     "Italian, Nigerian, spicy food",
     "Mushrooms",
     "none",
@@ -34,7 +34,7 @@ export const answers: Record<string, string[]> = {
     "Vietnamese",
   ],
   Smith: [
-    "Two adults",
+    "Just the two of us, Sam and Alex",
     "Italian, Mexican",
     "none",
     "none",
@@ -45,7 +45,7 @@ export const answers: Record<string, string[]> = {
     "Italian",
   ],
   Haddad: [
-    "Four",
+    "Four of us: Omar, Leila, Yusuf and Mira",
     "Lebanese, Italian",
     "none",
     "Halal",

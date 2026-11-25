@@ -166,3 +166,45 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.8rem; backgro
 .scroll-x { overflow-x: auto; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---- Paper ------------------------------------------------------------------------------- */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+/* ---- The circle -------------------------------------------------------------------------- */
+.circle { margin: 0 auto 20px; max-width: 600px; }
+.circle-svg {
+  display: block; width: 100%; height: auto; overflow: visible;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab;
+}
+.circle-svg:active { cursor: grabbing; }
+.circle-body { cursor: pointer; transition: opacity 300ms ease; outline: none; }
+.circle-body:focus-visible .circle-name { text-decoration: underline; }
+.circle-name { font-size: 34px; font-weight: 600; fill: var(--muted); transition: opacity 200ms ease; pointer-events: none; }
+.circle-member text { font-size: 30px; font-weight: 700; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 8px; stroke-linejoin: round; }
+.circle-shared { fill: var(--text); font-weight: 700; }
+.circle-thread-label { font-size: 28px; font-weight: 600; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 8px; stroke-linejoin: round; pointer-events: none; }
+.circle-card {
+  margin-top: 4px; padding: 14px 16px; border-radius: 22px; background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border: 1px solid var(--border); border-left-width: 6px; min-height: 92px;
+}
+.circle-card h3 { display: flex; align-items: center; gap: 8px; font-family: Georgia, "Iowan Old Style", serif; font-size: 1.3rem; }
+.circle-card h4 { margin: 14px 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.circle-members { font-family: Georgia, "Iowan Old Style", serif; font-size: 1.1rem; margin: 2px 0 8px; }
+.circle-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; opacity: 0.75; flex: none; }
+.circle-chip {
+  display: inline-block; margin: 2px 4px 2px 0; padding: 2px 10px; border-radius: 999px;
+  background: var(--surface-2); font-size: 0.9rem;
+}
+.circle-highlights { display: grid; gap: 6px; margin: 8px 0 0; }
+.circle-highlights > div { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; align-items: baseline; }
+.circle-highlights dt { color: var(--muted); font-size: 0.9rem; }
+.circle-highlights dd { margin: 0; }
+.circle-threads { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.circle-legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+.circle-legend button { min-height: 36px; gap: 8px; }
+
+@media (prefers-color-scheme: dark) {
+  .circle-ring circle[fill^="url("] { opacity: 0.5; }
+}

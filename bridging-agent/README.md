@@ -13,6 +13,7 @@ This is the Phase 1 MVP from the requirements: enough to run the first meal cycl
 | Requirement area | Built |
 | --- | --- |
 | Space setup, invites via WhatsApp share links | ✓ |
+| Home-screen circle: households as painted circles you can move, with names, tastes and shared threads | ✓ |
 | Magic-link login, no app install | ✓ Personal sign-in links (shared to yourself on WhatsApp). Emailed links once `RESEND_API_KEY` is set. |
 | Intake chat (typed or dictated, pause and resume) | ✓ |
 | Agent-drafted profile; review, edit, per-field visibility, approve | ✓ with full edit history |

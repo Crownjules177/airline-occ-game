@@ -34,7 +34,7 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
       Object.fromEntries(
         fields.map((f) => {
           const e = values[f.key] ?? { value: null, visibility: f.defaultVisibility };
-          const textual = ["text", "number", "list"].includes(f.type);
+          const textual = ["text", "number", "list", "names"].includes(f.type);
           return [f.key, { value: textual ? text[f.key] : e.value, visibility: e.visibility }];
         }),
       ),
@@ -85,13 +85,13 @@ export function ProfileEditor({ spaceId, profile, fields, history }: { spaceId: 
           <fieldset key={f.key} id={`field-${f.key}`} className="card" style={{ margin: "0 0 12px", scrollMarginTop: 16 }}>
             <legend className="sr-only">{f.label}</legend>
             <div className="field">
-              {["text", "number", "list"].includes(f.type) ? (
+              {["text", "number", "list", "names"].includes(f.type) ? (
                 <>
                   <label htmlFor={id}>
                     {f.label}
                     <span className="hint">
                       {f.description}
-                      {f.type === "list" && " Separate with commas."}
+                      {(f.type === "list" || f.type === "names") && " Separate with commas."}
                     </span>
                   </label>
                   <input
