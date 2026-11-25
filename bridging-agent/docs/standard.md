@@ -57,10 +57,11 @@ A template is a JSON document validated against `TemplateSchema` (`src/engine/te
 - the participant unit and labels, group size and timezone;
 - stages (label, description, enabled);
 - intake topics, each mapped to profile fields;
-- profile fields: key, label, description, type (`text`, `list`, `choice`, `multi`, `number`, `weekdays`, `dates`: ISO days or `from/to` ranges), options, default visibility, and whether the field is a `hard` or `soft` constraint;
+- profile fields: key, label, description, type (`text`, `list`, `names`, `choice`, `multi`, `number`, `weekdays`, `dates`: ISO days or `from/to` ranges), options, default visibility, and whether the field is a `hard` or `soft` constraint;
 - map output kinds and the approval threshold;
 - proposal guidance, default parts, cadences, maximum occurrences, and which fields carry availability, dates people can't make, themes and preferred parts;
 - event and task nouns, default time, duration and location;
+- the home-screen circle: which field names the people in a participant, which shared answers each circle highlights, and which fields draw threads between participants (only answers shared with the whole group are ever used);
 - sustain cadence and channels.
 
 Two templates ship: `community-meals` (ready) and `coalition` (draft, to be remapped to the coalition's facilitation framework).

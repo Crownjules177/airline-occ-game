@@ -4,7 +4,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { callToolClient, ErrorNote } from "../../components/tool";
 
-export function JoinForm({ code, household, signedIn }: { code: string; household: boolean; signedIn: boolean; spaceId: string }) {
+export function JoinForm({
+  code,
+  household,
+  signedIn,
+  emailEnabled,
+}: {
+  code: string;
+  household: boolean;
+  signedIn: boolean;
+  spaceId: string;
+  emailEnabled: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +52,12 @@ export function JoinForm({ code, household, signedIn }: { code: string; househol
       {!signedIn && (
         <div className="field">
           <label htmlFor="email">
-            Email <span className="hint">Optional. Lets you sign back in with an emailed link.</span>
+            Email{" "}
+            <span className="hint">
+              {emailEnabled
+                ? "Recommended. If you lose your way back in, we can email you a sign-in link. Used for nothing else."
+                : "Optional. Lets you sign back in with an emailed link once email is switched on."}
+            </span>
           </label>
           <input id="email" name="email" type="email" autoComplete="email" />
         </div>

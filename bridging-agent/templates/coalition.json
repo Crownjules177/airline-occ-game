@@ -64,6 +64,14 @@
     "durationMinutes": 60,
     "location": "Online"
   },
+  "circle": {
+    "highlights": [
+      { "field": "issues", "label": "Would act on" },
+      { "field": "hopes", "label": "Hopes" },
+      { "field": "expertise", "label": "Brings" }
+    ],
+    "threadFields": ["issues", "hopes", "expertise"]
+  },
   "sustain": { "cadence": "weekly_digest" },
   "channels": ["web", "email"]
 }

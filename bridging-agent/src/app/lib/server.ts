@@ -39,3 +39,7 @@ export const sessionCookieOptions = {
   path: "/",
   maxAge: 90 * 24 * 3600,
 };
+
+/** Holds a "let me back in" request's secret on the device that asked. */
+export const ACCESS_COOKIE = "ba_access";
+export const accessCookieOptions = { ...sessionCookieOptions, maxAge: 24 * 3600 };

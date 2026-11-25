@@ -56,9 +56,9 @@ A template may rename, reorder or skip stages.
 
 The engine exposes these as named tools with JSON input schemas (`GET /api/tools` lists them). Personal-layer tools act only on the caller's own data.
 
-- Personal: `get_intake`, `send_intake_message`, `draft_my_profile`, `get_my_profile`, `update_my_profile`, `submit_contribution`, `respond_to_proposal`, `claim_commitment`, `release_commitment`, `complete_commitment`, `export_my_data`, `delete_my_data`, `rotate_my_sign_in_link`, `join_space`
-- Group: `get_space`, `get_group_profiles`, `get_map`, `flag_map_item`, `list_proposals`, `get_plan`, `list_templates`, `get_invite`
-- Host: `create_space`, `host_overview`, `update_space_settings`, `generate_map`, `draft_proposals`, `edit_proposal`, `release_proposal`, `draft_revision`, `drop_proposal`, `adopt_proposal`, `get_audit_log`
+- Personal: `get_intake`, `send_intake_message`, `draft_my_profile`, `get_my_profile`, `update_my_profile`, `submit_contribution`, `respond_to_proposal`, `claim_commitment`, `release_commitment`, `complete_commitment`, `export_my_data`, `delete_my_data`, `rotate_my_sign_in_link`, `join_space`, `get_my_account`, `update_my_email`
+- Group: `get_space`, `get_group_profiles`, `get_map`, `flag_map_item`, `list_proposals`, `get_plan`, `list_templates`, `get_invite`, `get_circle`
+- Host: `create_space`, `host_overview`, `update_space_settings`, `generate_map`, `draft_proposals`, `edit_proposal`, `release_proposal`, `draft_revision`, `drop_proposal`, `adopt_proposal`, `get_audit_log`, `decide_access_request`
 
 ## Files
 

@@ -33,12 +33,26 @@ export function splitList(text: string): string[] {
     .filter((s) => s && !NONE.test(s));
 }
 
+const NOT_NAMES = new Set(
+  "a an and the of us we our i me my just so with plus kids kid children child adults adult little baby toddler teen teenager twins mum mom dad parents grandma grandpa nan who whos household family people eating eat would".split(" "),
+);
+
+/** First names from a free-text answer ("Ken and Kate, and our kids Maise and Ollie"). Mock agent only. */
+export function parseNames(text: string): string[] {
+  const words = text.match(/\b[A-Z][a-z'’-]+\b/g) ?? [];
+  return [
+    ...new Set(
+      words.filter((w) => !NOT_NAMES.has(w.toLowerCase()) && !(w.toLowerCase() in NUMBER_WORDS) && !DAY_PATTERNS.some(([, re]) => re.test(w))),
+    ),
+  ];
+}
+
 export function parseWeekdays(text: string): Weekday[] {
   if (/\b(any|every)\s*(week)?night\b|\bweeknights\b/i.test(text)) return ["Mon", "Tue", "Wed", "Thu", "Fri"];
   return DAY_PATTERNS.filter(([, re]) => re.test(text)).map(([d]) => d);
 }
 
-const LIST_TYPES = new Set(["list", "multi", "weekdays", "dates"]);
+const LIST_TYPES = new Set(["list", "names", "multi", "weekdays", "dates"]);
 
 /** Parse free text into a field value. Used for participant edits and by the mock agent. */
 export function parseFieldValue(field: ProfileField, text: string, today = new Date().toISOString().slice(0, 10)): FieldValue {
@@ -59,6 +73,8 @@ export function parseFieldValue(field: ProfileField, text: string, today = new D
     }
     case "list":
       return splitList(t);
+    case "names":
+      return parseNames(t);
     case "weekdays":
       return parseWeekdays(t);
     case "dates":
@@ -84,7 +100,7 @@ export function normaliseFieldValue(field: ProfileField, value: unknown): FieldV
     if (field.type === "weekdays") return WEEKDAYS.filter((d) => strings.includes(d));
     if (field.type === "dates") return normaliseDates(strings);
     if (field.type === "multi") return (field.options ?? []).filter((o) => strings.some((s) => s.toLowerCase() === o.toLowerCase()));
-    if (field.type === "list") return [...new Set(strings)];
+    if (field.type === "list" || field.type === "names") return [...new Set(strings)];
     return strings.join(", ") || null;
   }
   return null;

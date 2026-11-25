@@ -68,10 +68,13 @@ function LoginForm() {
           </button>
         </form>
       )}
-      <p className="small muted">
-        Joined without an email? Use the personal sign-in link you saved when you joined (for example in your WhatsApp chat
-        with yourself).
-      </p>
+      <div className="card stack small">
+        <p>
+          <strong>Joined without an email, or lost your link?</strong> Open your group's invite link again (the one in your
+          group chat) and choose <strong>Already joined? Get back in</strong>. Your host can let you back in from there.
+        </p>
+        <p className="muted">If you saved a personal sign-in link when you joined, that still works too.</p>
+      </div>
     </>
   );
 }

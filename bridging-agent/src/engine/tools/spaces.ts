@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { defineTool } from "./define";
 import { audit, requireAccount, requireHost, requireMember, ToolError, type ToolContext } from "../context";
 import {
+  accounts,
   agentCalls,
   auditEvents,
   intakeSessions,
@@ -17,6 +18,8 @@ import { getTemplate, listTemplates } from "../template";
 import { newId, newToken } from "../ids";
 import { createAccount, findAccountByEmail, rotatePersonalLink } from "../auth";
 import { whatsappShareUrl } from "../notify";
+import { pendingRequests, recentApprovals } from "../access";
+import { emailEnabled } from "./account";
 
 const displayName = z.string().trim().min(1).max(80);
 const email = z.string().trim().email().max(200).optional().or(z.literal("").transform(() => undefined));
@@ -24,7 +27,7 @@ const email = z.string().trim().email().max(200).optional().or(z.literal("").tra
 async function ensureAccount(ctx: ToolContext, name: string, emailAddr?: string) {
   if (ctx.accountId) return { accountId: ctx.accountId, newAccount: false };
   if (emailAddr && (await findAccountByEmail(ctx.db, emailAddr))) {
-    throw new ToolError("That email already has an account. Sign in first, then use the link again.", 409);
+    throw new ToolError("That email already has an account. Use \"Get back in\" to have a sign-in link sent to it.", 409);
   }
   return { accountId: await createAccount(ctx.db, name, emailAddr), newAccount: true };
 }
@@ -115,12 +118,20 @@ export const getInvite = defineTool({
         .where(and(eq(participants.spaceId, space.id), eq(participants.accountId, ctx.accountId)));
       alreadyMember = !!p;
     }
+    // Names only, so someone who has lost their sign-in can pick their household and ask the host.
+    const households = await ctx.db
+      .select({ id: participants.id, name: participants.displayName })
+      .from(participants)
+      .where(eq(participants.spaceId, space.id))
+      .orderBy(participants.createdAt);
     return {
       spaceId: space.id,
       spaceName: space.name,
       hostName: host?.name ?? "",
       template: { name: t.name, description: t.description, unit: t.unitLabel.singular, participantUnit: t.participantUnit },
       alreadyMember,
+      households,
+      emailEnabled: emailEnabled(),
     };
   },
 });
@@ -135,6 +146,19 @@ export const joinSpace = defineTool({
     const [space] = await ctx.db.select().from(spaces).where(eq(spaces.inviteCode, input.inviteCode));
     if (!space) throw new ToolError("This invite link isn't valid.", 404);
     const template = getTemplate(space.templateId);
+    if (!ctx.accountId) {
+      // Someone who lost their sign-in shouldn't quietly become a second household.
+      const same = await ctx.db
+        .select({ id: participants.id })
+        .from(participants)
+        .where(and(eq(participants.spaceId, space.id), sql`lower(trim(${participants.displayName})) = ${input.displayName.toLowerCase()}`));
+      if (same.length) {
+        throw new ToolError(
+          `"${input.displayName}" has already joined. If that's you, use "Get back in" above instead of joining again.`,
+          409,
+        );
+      }
+    }
     const { accountId, newAccount } = await ensureAccount(ctx, input.displayName, input.email);
     const [existing] = await ctx.db
       .select()
@@ -193,6 +217,9 @@ export const getSpace = defineTool({
   input: z.object({ spaceId: z.string() }),
   run: async (ctx, { spaceId }) => {
     const { space, me, template, isHost } = await requireMember(ctx, spaceId);
+    const [account] = await ctx.db.select({ email: accounts.email }).from(accounts).where(eq(accounts.id, me.accountId));
+    const approvals = await recentApprovals(ctx.db, me.id, ctx.now);
+    const waiting = isHost ? await pendingRequests(ctx.db, spaceId, ctx.now) : [];
     const people = await ctx.db.select().from(participants).where(eq(participants.spaceId, spaceId));
     const profs = await ctx.db.select().from(profiles).where(eq(profiles.spaceId, spaceId));
     const [intake] = await ctx.db.select().from(intakeSessions).where(eq(intakeSessions.participantId, me.id));
@@ -218,7 +245,17 @@ export const getSpace = defineTool({
         taskNoun: template.act.taskNoun,
         unavailableField: template.proposal.unavailableField ?? null,
       },
-      me: { participantId: me.id, displayName: me.displayName, role: me.role, isHost },
+      me: {
+        participantId: me.id,
+        displayName: me.displayName,
+        role: me.role,
+        isHost,
+        // Email sign-in is on but we have nowhere to send a link if they lose this device.
+        needsEmail: emailEnabled() && !account?.email,
+        // Devices the host let in for this household lately, so a surprise is visible.
+        hostLetInAt: approvals.map((a) => a.usedAt).filter(Boolean),
+      },
+      pendingAccessRequests: isHost ? waiting.length : 0,
       progress: {
         intake: intake?.status ?? "not_started",
         profile: mine?.status ?? "none",
@@ -255,6 +292,7 @@ export const hostOverview = defineTool({
     const awayKey = template.proposal.unavailableField;
     return {
       inviteUrl,
+      accessRequests: await pendingRequests(ctx.db, spaceId, ctx.now),
       awayDatesWhatsapp: awayKey
         ? whatsappShareUrl(
             `Quick one for our ${template.name.toLowerCase()}: please add any dates you already know you can't make (holidays, trips, busy weeks). It takes a minute, and nobody sees who's away, only how many: ${ctx.appUrl}/s/${space.id}/profile#field-${awayKey}`,

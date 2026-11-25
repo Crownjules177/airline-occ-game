@@ -45,12 +45,24 @@ Vercel deploys the repository's **production branch** (usually `main`). Until th
 3. **Host** tab → **Audit log** should show `intake` calls with model `claude-opus-5`.
 4. In Supabase → **Table Editor**, you should see the tables filling up.
 
-## Later: email sign-in links
+## Email sign-in links (recommended)
 
 Create a Resend account, verify a sending domain, then add `RESEND_API_KEY` and `EMAIL_FROM` (for example `Meal share <meals@yourdomain>`) in Vercel and redeploy. Until then people sign in with their personal link.
 
+With email on, anyone who has lost their way in can open the invite link (or the sign-in page) and have a fresh link emailed to them, with no help from you. Households that joined without an email can add one under **My data**.
+
+## When someone can't get back in
+
+Tell them to open the group's invite link again and choose **Already joined? Get back in**:
+
+- **I gave an email:** a sign-in link is emailed to them.
+- **No email:** they pick their household and ask you. You'll see "Asking to get back in" on your Home and Host pages. Approve only if you know it's them. Their phone is signed in straight away; you never handle a link. Requests last 24 hours.
+
+If a phone is lost, the household can use **My data → Sign out other devices**.
+
 ## Troubleshooting
 
+- **Build fails with "Couldn't apply database migrations":** on Supabase's free plan a project pauses after about a week without use. Restore it from the Supabase dashboard, then redeploy. Only production deploys migrate; preview builds of pull requests skip it so they can't change the live database.
 - **Build fails at "Migrations applied" / connection errors:** check `DATABASE_URL` uses port 6543 and the pooler host, and that the password has no brackets left in it.
 - **Links point to localhost:** `APP_URL` isn't set, or you didn't redeploy after setting it.
 - **An agent step times out:** check **Deployments → Functions** logs; each call is also in the host audit log with its error.

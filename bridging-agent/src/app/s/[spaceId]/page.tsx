@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { call } from "../../lib/server";
 import { IdeaForm } from "./idea-form";
+import { CircleView, type CircleData } from "./circle-view";
 
 const ORDER = ["intake", "map", "agree", "act", "sustain", "bridge"];
 
 export default async function SpaceHome({ params }: { params: Promise<{ spaceId: string }> }) {
   const { spaceId } = await params;
-  const s = await call("get_space", { spaceId });
+  const [s, circle] = await Promise.all([call("get_space", { spaceId }), call<CircleData>("get_circle", { spaceId })]);
   const base = `/s/${spaceId}`;
   const p = s.progress;
   const g = s.group;
+  // Show the "host let a device in" note for a week; the full list stays on My data.
+  const recentLetIn = s.me.hostLetInAt.some((d: string) => Date.now() - new Date(d).getTime() < 7 * 24 * 3600_000);
   const pct = g.participants ? Math.round((100 * g.approvedProfiles) / g.participants) : 0;
 
   let next: { title: string; body: string; href: string; cta: string } | null = null;
@@ -49,6 +52,23 @@ export default async function SpaceHome({ params }: { params: Promise<{ spaceId:
   const current = ORDER.indexOf(s.space.stage);
   return (
     <>
+      <CircleView data={circle} profileHref={`${base}/profile`} />
+      {s.pendingAccessRequests > 0 && (
+        <div className="card accent stack">
+          <h3>
+            {s.pendingAccessRequests === 1 ? "Someone is" : `${s.pendingAccessRequests} households are`} asking to get back in
+          </h3>
+          <p>They lost their way in and picked their {s.template.unit.singular} on the invite page. Check it's really them, then approve.</p>
+          <Link className="btn primary" href={`${base}/host#access`}>
+            Review
+          </Link>
+        </div>
+      )}
+      {recentLetIn && (
+        <p className="notice small">
+          Your host let a device into {s.me.displayName} recently. If that wasn't you, <Link href={`${base}/me`}>sign out other devices</Link>.
+        </p>
+      )}
       {next ? (
         <div className="card accent stack">
           <h3>{next.title}</h3>
@@ -65,6 +85,16 @@ export default async function SpaceHome({ params }: { params: Promise<{ spaceId:
               ? "The map appears once enough of the group has approved their profiles."
               : "The host will release options for the group soon."}
           </p>
+        </div>
+      )}
+
+      {s.me.needsEmail && (
+        <div className="card stack">
+          <h3>Add an email, just in case</h3>
+          <p className="small">If you ever lose your way back in, we can email you a sign-in link. Nobody in the group sees it.</p>
+          <Link className="btn" href={`${base}/me#email`}>
+            Add email
+          </Link>
         </div>
       )}
 

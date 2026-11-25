@@ -1,10 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { callToolClient, CopyButton, ErrorNote } from "../../../components/tool";
 
-export function MyData({ spaceId, isHost, welcome }: { spaceId: string; isHost: boolean; welcome: boolean }) {
+export function MyData({
+  spaceId,
+  isHost,
+  welcome,
+  children,
+}: {
+  spaceId: string;
+  isHost: boolean;
+  welcome: boolean;
+  /** Rendered after the sign-in link card. */
+  children?: ReactNode;
+}) {
   const router = useRouter();
   const [link, setLink] = useState<{ url: string; whatsapp: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +64,8 @@ export function MyData({ spaceId, isHost, welcome }: { spaceId: string; isHost: 
           </button>
         )}
       </div>
+
+      {children}
 
       <div className="card stack">
         <h3>Download my data</h3>

@@ -8,6 +8,8 @@ import * as map from "./map";
 import * as proposals from "./proposals";
 import * as plan from "./plan";
 import * as data from "./data";
+import * as circle from "./circle";
+import * as account from "./account";
 
 const all: Tool[] = [
   spaces.listTemplatesTool,
@@ -26,6 +28,10 @@ const all: Tool[] = [
   profiles.getMyProfile,
   profiles.updateMyProfile,
   profiles.getGroupProfiles,
+  circle.getCircle,
+  account.getMyAccount,
+  account.updateMyEmail,
+  account.decideAccessRequest,
   map.submitContribution,
   map.getMap,
   map.generateMap,
