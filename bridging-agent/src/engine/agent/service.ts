@@ -6,6 +6,24 @@ import { agentCalls } from "../db/schema";
 import type { Template } from "../template";
 import { loadPrompt } from "./prompts";
 import { newId } from "../ids";
+import { ToolError } from "../context";
+
+/** Turn a model failure into a message the host can act on (the full error is in the audit log). */
+function agentFailure(e: unknown): Error {
+  if (e instanceof ToolError) return e;
+  let why = "it hit an unexpected error";
+  if (e instanceof Anthropic.RateLimitError) why = "the AI service is rate-limiting us";
+  else if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError)
+    why = "the Anthropic API key was rejected (check ANTHROPIC_API_KEY in Vercel)";
+  else if (e instanceof Anthropic.NotFoundError) why = "the model name wasn't recognised (check BRIDGING_MODEL in Vercel)";
+  else if (e instanceof Anthropic.BadRequestError) why = `the AI service rejected the request (${e.message.slice(0, 200)})`;
+  else if (e instanceof Anthropic.APIConnectionError) why = "the AI service couldn't be reached";
+  else if (e instanceof Anthropic.APIError && (e.status ?? 0) >= 500) why = "the AI service is busy or down";
+  else if (e instanceof Error && /declined/.test(e.message)) why = "the model declined this request";
+  else if (e instanceof Error && /cut off/.test(e.message)) why = "its answer was too long and got cut off";
+  else if (e instanceof Error && /parseable/.test(e.message)) why = "its answer wasn't in the expected shape";
+  return new ToolError(`The agent couldn't finish this step: ${why}. Please try again in a minute; details are in the Host audit log.`, 502);
+}
 
 export type Effort = "low" | "medium" | "high";
 
@@ -42,9 +60,10 @@ export class ClaudeModel implements ModelClient {
   }
 
   async complete<O>({ system, user, schema, effort }: Parameters<ModelClient["complete"]>[0] & { schema: z.ZodType<O> }) {
-    const response = await this.client.beta.messages.parse({
+    // Streamed, so a long think plus a long answer has room (64k) without hitting HTTP timeouts.
+    const stream = this.client.beta.messages.stream({
       model: this.model,
-      max_tokens: 16000,
+      max_tokens: 64000,
       // If a safety classifier declines, retry server-side on Anthropic's recommended fallback.
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
@@ -54,6 +73,7 @@ export class ClaudeModel implements ModelClient {
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: user }],
     });
+    const response = await stream.finalMessage();
     if (response.stop_reason === "refusal") {
       throw new Error(`Model declined the request (${response.stop_details?.category ?? "unspecified"})`);
     }
@@ -111,7 +131,7 @@ export class AgentService {
       return { output, callId };
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
-      throw e;
+      throw agentFailure(e);
     } finally {
       await this.db.insert(agentCalls).values({
         id: callId,

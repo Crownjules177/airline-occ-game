@@ -32,7 +32,7 @@
     ]
   },
   "profileFields": [
-    { "key": "household_members", "label": "Who's in the household", "description": "First names of everyone in the household, kids included. Shown in the group circle so neighbours can greet you by name.", "type": "names", "defaultVisibility": "group", "example": "Ken, Kate, Maise, Ollie" },
+    { "key": "household_members", "label": "Who's in the household", "description": "First names of everyone in the household, kids included. Shown in the group circle so neighbours can greet you by name.", "type": "names", "defaultVisibility": "group", "example": "Ana, Tom, Lily, Jun" },
     { "key": "household_size", "label": "People eating", "description": "Number of people in the household who would eat at shared meals.", "type": "number", "defaultVisibility": "group", "example": "4" },
     { "key": "household_notes", "label": "About the household", "description": "Who is in the household, in their own words (for example: two adults, kids aged 4 and 7).", "type": "text", "defaultVisibility": "group", "example": "Two adults, two kids (4 and 7)" },
     { "key": "cuisines_loved", "label": "Cuisines loved", "description": "Cuisines or dishes the household loves.", "type": "list", "defaultVisibility": "group", "example": "Vietnamese, Italian" },

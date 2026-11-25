@@ -9,7 +9,7 @@ describe("the circle", () => {
 
     expect(circle.households.map((x: any) => x.name)).toEqual(["Nguyen", "Patel", "Okafor", "Smith", "Haddad"]);
     const nguyen = circle.households.find((x: any) => x.name === "Nguyen");
-    expect(nguyen).toMatchObject({ members: ["Ken", "Kate", "Maise", "Ollie"], size: 4, joined: true, isMe: false, hue: 0 });
+    expect(nguyen).toMatchObject({ members: ["Ana", "Tom", "Lily", "Jun"], size: 4, joined: true, isMe: false, hue: 0 });
     expect(nguyen.highlights).toEqual(
       expect.arrayContaining([
         { label: "Loves", values: ["Vietnamese", "Italian", "dumplings"] },
