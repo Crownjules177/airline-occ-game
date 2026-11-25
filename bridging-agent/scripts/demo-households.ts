@@ -1,7 +1,7 @@
 /** Answers for the community-meals intake, one per topic, in order. */
 export const answers: Record<string, string[]> = {
   Nguyen: [
-    "Ken and Kate, and our kids Maise and Ollie, so four of us",
+    "Ana and Tom, and our kids Lily and Jun, so four of us",
     "Vietnamese, Italian and dumplings",
     "Very spicy food",
     "No pork",

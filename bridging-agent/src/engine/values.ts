@@ -37,7 +37,7 @@ const NOT_NAMES = new Set(
   "a an and the of us we our i me my just so with plus kids kid children child adults adult little baby toddler teen teenager twins mum mom dad parents grandma grandpa nan who whos household family people eating eat would".split(" "),
 );
 
-/** First names from a free-text answer ("Ken and Kate, and our kids Maise and Ollie"). Mock agent only. */
+/** First names from a free-text answer ("Ana and Tom, and our kids Lily and Jun"). Mock agent only. */
 export function parseNames(text: string): string[] {
   const words = text.match(/\b[A-Z][a-z'’-]+\b/g) ?? [];
   return [

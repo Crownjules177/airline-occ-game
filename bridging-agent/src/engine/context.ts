@@ -18,7 +18,7 @@ export type ToolContext = {
 export class ToolError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 401 | 403 | 404 | 409 = 400,
+    readonly status: 400 | 401 | 403 | 404 | 409 | 502 = 400,
   ) {
     super(message);
   }
