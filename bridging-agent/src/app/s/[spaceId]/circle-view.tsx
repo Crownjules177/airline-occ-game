@@ -35,6 +35,58 @@ const R = 388; // the group's ring
 const FOCUS_SCALE = 1.3;
 /** The others step back a little while one circle is in focus. */
 const REST_SCALE = 0.82;
+/** A circle in focus grows to at least this radius, so its names fit even in a big group. */
+const FOCUS_MIN_R = 92;
+const focusScale = (r: number) => Math.max(FOCUS_SCALE, FOCUS_MIN_R / r);
+/** Most threads drawn from one circle at once; past this the strongest win. */
+const MAX_THREADS = 12;
+/** Linked circles get a "· shared thing" label only while there are few enough to read. */
+const MAX_LINK_LABELS = 8;
+const GRADIENT_COLOURS = [...PALETTE, OCHRE];
+
+/** A flare: a soft jet pointing along +x from its base, scaled by CSS so it licks out and falls back. */
+function flarePath(len: number, w: number, bend: number) {
+  const tipY = bend * len;
+  return `M0 ${(-w / 2).toFixed(1)} Q${(len * 0.55).toFixed(1)} ${(-w * 0.3 + tipY * 0.5).toFixed(1)} ${len.toFixed(1)} ${tipY.toFixed(1)} Q${(len * 0.55).toFixed(1)} ${(w * 0.3 + tipY * 0.5).toFixed(1)} 0 ${(w / 2).toFixed(1)}Z`;
+}
+
+// ---- Paintings ---------------------------------------------------------------------------------
+// The watercolour filters are slow to run, and the paintings never change, so each one is drawn
+// once into a self-contained SVG image. Moving an image is cheap; re-filtering every frame is not.
+const PAINT_FILTERS =
+  '<filter id="e" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+  '<filter id="b" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="1.1"/></filter>';
+
+function painting(x: number, y: number, size: number, body: string, defs = "") {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${size} ${size}" width="${size}" height="${size}"><defs>${PAINT_FILTERS}${defs}</defs>${body}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/** How far a painting reaches past the group's viewBox (the ring's strokes run outside it). */
+const RING_BLEED = 70;
+
+type Flare = { x: number; y: number; deg: number; d: string; c: string; dur: number; delay: number; o: number };
+
+function makeFlare(rand: () => number, r: number, ang: number, len: number, w: number, c: string, cx = 0, cy = 0): Flare {
+  const [x, y] = polar(r, ang, cx, cy);
+  const dur = 4 + rand() * 7;
+  return { x, y, deg: (ang * 180) / Math.PI, d: flarePath(len, w, (rand() - 0.5) * 0.25), c, dur, delay: -rand() * dur, o: 0.35 + rand() * 0.35 };
+}
+
+const timing = (dur: number, delay: number, o: number) =>
+  ({ "--d": `${dur.toFixed(2)}s`, "--delay": `${delay.toFixed(2)}s`, "--o": o.toFixed(2) }) as React.CSSProperties;
+
+function Flares({ flares, uid }: { flares: Flare[]; uid: string }) {
+  return (
+    <>
+      {flares.map((f, i) => (
+        <g key={i} transform={`translate(${f.x.toFixed(1)} ${f.y.toFixed(1)}) rotate(${f.deg.toFixed(1)})`}>
+          <path className="flare" d={f.d} fill={`url(#${uid}-fl-${GRADIENT_COLOURS.indexOf(f.c)})`} style={timing(f.dur, f.delay, f.o)} />
+        </g>
+      ))}
+    </>
+  );
+}
 
 /** Small seeded random generator, so the painting is the same on the server and every render. */
 function rng(seed: number) {
@@ -150,7 +202,40 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
         o: 0.2 + rand() * 0.35,
       };
     });
-    return { segments: segments.length ? segments : [{ c: OCHRE, a0: 0, a1: Math.PI * 2 - 0.001 }], spikes };
+    // Solar flares: jets that lick out from the ring and fall back, and a few prominences, loops that
+    // rise off the surface and dissolve. A separate, unfiltered layer, so animating it stays cheap.
+    const flares = Array.from({ length: 30 }, (_, i) => {
+      const ang = (i / 30) * Math.PI * 2 + (rand() - 0.5) * 0.18;
+      return makeFlare(rand, R - 3, ang, 40 + rand() * rand() * 120, 6 + rand() * 12, rand() < 0.2 ? OCHRE : at(ang), C, C);
+    });
+    const prominences = Array.from({ length: 4 }, (_, i) => {
+      const ang = (i / 4) * Math.PI * 2 + rand() * 1.2;
+      const span = 18 + rand() * 26;
+      const h = 45 + rand() * 60;
+      const dur = 9 + rand() * 8;
+      return {
+        deg: (ang * 180) / Math.PI,
+        d: `M${R - 2} ${(-span).toFixed(1)} C${(R + h).toFixed(1)} ${(-span * 1.5).toFixed(1)} ${(R + h).toFixed(1)} ${(span * 1.5).toFixed(1)} ${R - 2} ${span.toFixed(1)}`,
+        c: at(ang),
+        w: 2.5 + rand() * 3,
+        dur,
+        delay: -rand() * dur,
+        o: 0.35 + rand() * 0.25,
+      };
+    });
+    const segs = segments.length ? segments : [{ c: OCHRE, a0: 0, a1: Math.PI * 2 - 0.001 }];
+    const uri = painting(
+      -RING_BLEED,
+      -RING_BLEED,
+      VB + 2 * RING_BLEED,
+      `<circle cx="${C}" cy="${C}" r="${R - 8}" fill="url(#w)"/>` +
+        `<g filter="url(#b)">${spikes.map((s) => `<path d="${s.d}" fill="${s.c}" opacity="${s.o.toFixed(2)}"/>`).join("")}</g>` +
+        `<g filter="url(#e)" fill="none" stroke-linecap="round">${segs
+          .map((s) => `<path d="${arc(R, s.a0, s.a1)}" stroke="${s.c}" stroke-width="9" opacity="0.7"/>`)
+          .join("")}<circle cx="${C}" cy="${C}" r="${R - 6}" stroke="${UMBER}" stroke-width="2.5" opacity="0.45"/></g>`,
+      `<radialGradient id="w"><stop offset="70%" stop-color="${OCHRE}" stop-opacity="0"/><stop offset="96%" stop-color="${OCHRE}" stop-opacity="0.16"/><stop offset="100%" stop-color="${OCHRE}" stop-opacity="0"/></radialGradient>`,
+    );
+    return { uri, flares, prominences };
   }, [hs]);
 
   // ---- Each household's own little painting: halo, ring, wash and a dot per person.
@@ -159,21 +244,46 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
       hs.map((h, i) => {
         const rand = rng(1000 + i * 31);
         const r = rs[i];
+        const c = colour(h.hue);
+        const dots = memberLayout(h.size, r);
+        const halo = Array.from({ length: 30 }, (_, k) => ({
+          d: spike(r + 1, (k / 30) * Math.PI * 2 + (rand() - 0.5) * 0.15, 5 + rand() * rand() * 26, 2 + rand() * 4, (rand() - 0.5) * 0.1),
+          o: 0.15 + rand() * 0.3,
+        }));
+        const S = r + 40;
+        const uri = painting(
+          -S,
+          -S,
+          2 * S,
+          h.joined
+            ? `<g filter="url(#b)">${halo.map((s) => `<path d="${s.d}" fill="${c}" opacity="${s.o.toFixed(2)}"/>`).join("")}</g>` +
+                `<g filter="url(#e)"><circle r="${r}" fill="${c}" fill-opacity="0.07" stroke="${c}" stroke-width="3.5" opacity="0.9"/>` +
+                `<circle r="${r - 7}" fill="none" stroke="${OCHRE}" stroke-width="8" opacity="0.22"/>` +
+                dots.map((d) => `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="${d.r.toFixed(1)}" fill="${c}" fill-opacity="0.3" stroke="${c}" stroke-width="2.2"/>`).join("") +
+                `</g>`
+            : `<circle r="${r}" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="5 12" stroke-linecap="round" opacity="0.55" filter="url(#e)"/>`,
+        );
         return {
-          halo: Array.from({ length: 30 }, (_, k) => ({
-            d: spike(r + 1, (k / 30) * Math.PI * 2 + (rand() - 0.5) * 0.15, 5 + rand() * rand() * 26, 2 + rand() * 4, (rand() - 0.5) * 0.1),
-            o: 0.15 + rand() * 0.3,
-          })),
-          dots: memberLayout(h.size, r),
+          uri,
+          S,
+          dots,
+          // Smaller suns get fewer flares and tiny ones none, so a big group stays calm.
+          flares: Array.from({ length: r < 24 ? 0 : hs.length > 30 ? 3 : 6 }, () => {
+            const ang = rand() * Math.PI * 2;
+            return makeFlare(rand, r, ang, r * (0.25 + rand() * 0.45), 3 + rand() * 5, colour(h.hue));
+          }),
         };
       }),
     [hs, rs],
   );
 
   const threadsFor = useCallback((id: string | null) => (id ? data.threads.filter((t) => t.a === id || t.b === id) : []), [data.threads]);
-  const focusThreads = threadsFor(focus);
+  // Strongest threads first, capped so a big group doesn't turn into a web.
+  const allFocusThreads = threadsFor(focus).sort((a, b) => b.shared.length - a.shared.length);
+  const focusThreads = allFocusThreads.slice(0, MAX_THREADS);
   // For each household linked to the one in focus, the first thing they share.
   const linked = new Map(focusThreads.map((t) => [t.a === focus ? t.b : t.a, t.shared[0].value]));
+  const showLinkLabels = linked.size <= MAX_LINK_LABELS;
 
   // ---- Motion: gentle orbit, soft collisions, flicks and swirls.
   const drag = useRef<
@@ -196,7 +306,11 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
     let raf = 0;
     let last = performance.now();
     let visible = true;
-    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      // Flares are CSS animations: pause them too while the circle is off screen.
+      svgRef.current?.classList.toggle("is-paused", !visible);
+    });
     if (svgRef.current) io.observe(svgRef.current);
 
     const step = (now: number) => {
@@ -208,8 +322,8 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
       const dragging = drag.current?.kind === "body" ? drag.current.i : -1;
       const focusIndex = hs.findIndex((h) => h.id === focusRef.current);
       // Space a circle needs: its own size plus its name label, or its names all round when in focus.
-      const scaleOf = (i: number) => (focusIndex < 0 ? 1 : i === focusIndex ? FOCUS_SCALE : REST_SCALE);
-      const room = (i: number) => (i === focusIndex ? B[i].r * FOCUS_SCALE + 104 : B[i].r * scaleOf(i) + (focusIndex < 0 ? 26 : 44));
+      const scaleOf = (i: number) => (focusIndex < 0 ? 1 : i === focusIndex ? focusScale(B[i].r) : REST_SCALE);
+      const room = (i: number) => (i === focusIndex ? B[i].r * scaleOf(i) + 140 : B[i].r * scaleOf(i) + (focusIndex < 0 ? 26 : 44));
 
       for (let i = 0; i < B.length; i++) {
         if (i === dragging) continue;
@@ -227,7 +341,7 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
           b.vy += (0.07 * d - vt) * ty * k;
         }
         // A soft pull inwards keeps the constellation together; the circle in focus glides to the middle.
-        const pull = i === focusIndex ? 5 : 0.05;
+        const pull = i === focusIndex ? 8 : 0.05;
         b.vx -= dx * pull * dt;
         b.vy -= dy * pull * dt;
         const damp = Math.exp(-(i === focusIndex ? 6 : reduced ? 3 : 0.9) * dt);
@@ -249,7 +363,9 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
           const nx = dx / d;
           const ny = dy / d;
           const push = min - d;
-          const wa = i === dragging ? 0 : j === dragging ? 1 : 0.5;
+          // A circle being dragged, or in focus, holds its ground; others make way.
+          const fixed = (k: number) => k === dragging || k === focusIndex;
+          const wa = fixed(i) ? 0 : fixed(j) ? 1 : 0.5;
           const wb = 1 - wa;
           a.x -= nx * push * wa;
           a.y -= ny * push * wa;
@@ -269,7 +385,7 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
         const dx = b.x - C;
         const dy = b.y - C;
         const d = Math.hypot(dx, dy) || 1;
-        const max = R - (i === focusIndex ? b.r * FOCUS_SCALE + 8 : b.r * scaleOf(i) + 22);
+        const max = R - (i === focusIndex ? b.r * scaleOf(i) + 8 : b.r * scaleOf(i) + 22);
         if (d > max) {
           b.x = C + (dx / d) * max;
           b.y = C + (dy / d) * max;
@@ -400,40 +516,30 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
         onPointerCancel={onUp}
       >
         <defs>
-          <filter id={`${uid}-edge`} x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-          <filter id={`${uid}-bleed`} x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="3" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G" />
-            <feGaussianBlur stdDeviation="1.1" />
-          </filter>
-          <radialGradient id={`${uid}-wash`}>
-            <stop offset="70%" stopColor={OCHRE} stopOpacity="0" />
-            <stop offset="96%" stopColor={OCHRE} stopOpacity="0.16" />
-            <stop offset="100%" stopColor={OCHRE} stopOpacity="0" />
-          </radialGradient>
+          {GRADIENT_COLOURS.map((c, i) => (
+            <linearGradient key={c} id={`${uid}-fl-${i}`} x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor={c} stopOpacity="0.75" />
+              <stop offset="0.55" stopColor={c} stopOpacity="0.35" />
+              <stop offset="1" stopColor={c} stopOpacity="0" />
+            </linearGradient>
+          ))}
         </defs>
 
         {/* The group: our friendship, painted from everyone's colours. */}
-        <g className="circle-ring" aria-hidden>
-          <circle cx={C} cy={C} r={R - 8} fill={`url(#${uid}-wash)`} />
-          <g filter={`url(#${uid}-bleed)`}>
-            {ring.spikes.map((s, i) => (
-              <path key={i} d={s.d} fill={s.c} opacity={s.o} />
-            ))}
-          </g>
-          <g filter={`url(#${uid}-edge)`} fill="none" strokeLinecap="round">
-            {ring.segments.map((s, i) => (
-              <path key={i} d={arc(R, s.a0, s.a1)} stroke={s.c} strokeWidth={9} opacity={0.7} />
-            ))}
-            <circle cx={C} cy={C} r={R - 6} stroke={UMBER} strokeWidth={2.5} opacity={0.45} />
-          </g>
+        <image className="circle-painting" href={ring.uri} x={-RING_BLEED} y={-RING_BLEED} width={VB + 2 * RING_BLEED} height={VB + 2 * RING_BLEED} aria-hidden />
+
+        {/* The ring's flares and prominences. */}
+        <g className="circle-flares" aria-hidden>
+          {ring.prominences.map((p, i) => (
+            <g key={i} transform={`translate(${C} ${C}) rotate(${p.deg.toFixed(1)})`}>
+              <path className="prominence" d={p.d} pathLength={1} fill="none" stroke={p.c} strokeWidth={p.w} strokeLinecap="round" style={timing(p.dur, p.delay, p.o)} />
+            </g>
+          ))}
+          <Flares flares={ring.flares} uid={uid} />
         </g>
 
         {/* Threads to the households the focused one shares something with. */}
-        <g aria-hidden filter={`url(#${uid}-edge)`}>
+        <g aria-hidden>
           {focusThreads.map((t) => {
             const key = `${t.a}|${t.b}`;
             return (
@@ -485,25 +591,17 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
                 }
               }}
             >
-              <g style={{ transform: `scale(${isFocus ? FOCUS_SCALE : focus ? REST_SCALE : 1})`, transition: "transform 450ms cubic-bezier(.2,.8,.2,1)" }}>
-                {h.joined ? (
-                  <>
-                    <g filter={`url(#${uid}-bleed)`} aria-hidden>
-                      {art[i].halo.map((s, k) => (
-                        <path key={k} d={s.d} fill={c} opacity={s.o} />
-                      ))}
-                    </g>
-                    <g filter={`url(#${uid}-edge)`} aria-hidden>
-                      <circle r={r} fill={c} fillOpacity={0.07} stroke={c} strokeWidth={3.5} opacity={0.9} />
-                      <circle r={r - 7} fill="none" stroke={OCHRE} strokeWidth={8} opacity={0.22} />
-                      {art[i].dots.map((d, k) => (
-                        <circle key={k} cx={d.x} cy={d.y} r={d.r} fill={c} fillOpacity={0.3} stroke={c} strokeWidth={2.2} />
-                      ))}
-                    </g>
-                  </>
-                ) : (
-                  <circle r={r} fill="none" stroke={c} strokeWidth={3} strokeDasharray="5 12" strokeLinecap="round" opacity={0.55} filter={`url(#${uid}-edge)`} />
+              <g style={{ transform: `scale(${isFocus ? focusScale(r) : focus ? REST_SCALE : 1})`, transition: "transform 450ms cubic-bezier(.2,.8,.2,1)" }}>
+                {h.joined && (
+                  <g className="circle-flares" aria-hidden>
+                    <Flares flares={art[i].flares} uid={uid} />
+                  </g>
                 )}
+                {/* Invisible target for taps and hovers; the painting itself ignores the pointer. */}
+                <circle r={Math.max(r + 6, 22)} fill="transparent" />
+                <image className="circle-painting" href={art[i].uri} x={-art[i].S} y={-art[i].S} width={art[i].S * 2} height={art[i].S * 2} aria-hidden />
+                {/* Your own household carries a faint dotted ring, so you can find yourself without labels. */}
+                {h.isMe && <circle r={r + 13} fill="none" stroke={c} strokeWidth={2.4} strokeDasharray="1 9" strokeLinecap="round" opacity={0.7} aria-hidden />}
                 {/* Names appear round the circle when it's in focus. */}
                 {isFocus &&
                   h.members.map((m, k) => {
@@ -523,11 +621,14 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
                     );
                   })}
               </g>
-              <text className="circle-name" y={r * (focus ? REST_SCALE : 1) + 40} textAnchor="middle" aria-hidden style={{ opacity: isFocus ? 0 : 1 }}>
-                {h.isMe ? "You" : h.name}
-                {!h.joined && " · joining"}
-                {linked.has(h.id) && <tspan className="circle-shared"> · {linked.get(h.id)}</tspan>}
-              </text>
+              {/* Names stay hidden until you hover or tap, so even a big group reads as a painting. */}
+              {!isFocus && (hovered === h.id || (showLinkLabels && linked.has(h.id))) && (
+                <text className="circle-name" y={r * (focus ? REST_SCALE : 1) + 40} textAnchor="middle" aria-hidden>
+                  {h.isMe ? "You" : h.name}
+                  {!h.joined && " · joining"}
+                  {showLinkLabels && linked.has(h.id) && <tspan className="circle-shared"> · {linked.get(h.id)}</tspan>}
+                </text>
+              )}
             </g>
           );
         })}
@@ -599,22 +700,30 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
                     );
                   })}
                 </ul>
+                {allFocusThreads.length > focusThreads.length && (
+                  <p className="small muted">and {allFocusThreads.length - focusThreads.length} more</p>
+                )}
               </>
             )}
           </>
         ) : (
           <>
             <p className="small muted" style={{ textAlign: "center" }}>
-              Tap a circle to meet a {data.unit.singular}. Drag one to move it, or stir the circle with your finger.
+              Tap a circle to see who's inside. Drag one to move it, or stir the circle with your finger. Yours has a dotted ring.
             </p>
-            <div className="circle-legend">
-              {hs.map((h) => (
-                <button key={h.id} type="button" className="small" onClick={() => toggle(h.id)}>
-                  <span className="circle-dot" style={{ background: colour(h.hue) }} aria-hidden />
-                  {h.isMe ? `${h.name} (you)` : h.name}
-                </button>
-              ))}
-            </div>
+            <details className="circle-who">
+              <summary>
+                Who's in the circle ({hs.length} {hs.length === 1 ? data.unit.singular : data.unit.plural})
+              </summary>
+              <div className="circle-legend">
+                {hs.map((h) => (
+                  <button key={h.id} type="button" className="small" onClick={() => toggle(h.id)}>
+                    <span className="circle-dot" style={{ background: colour(h.hue) }} aria-hidden />
+                    {h.isMe ? `${h.name} (you)` : h.name}
+                  </button>
+                ))}
+              </div>
+            </details>
           </>
         )}
       </div>

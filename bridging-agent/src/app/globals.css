@@ -294,6 +294,32 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.8rem; backgro
 .circle-legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
 .circle-legend button { min-height: 36px; gap: 8px; }
 
+.circle-painting { pointer-events: none; }
 @media (prefers-color-scheme: dark) {
-  .circle-ring circle[fill^="url("] { opacity: 0.5; }
+  .circle-painting { opacity: 0.92; }
 }
+
+/* ---- Solar flares -------------------------------------------------------------------------- */
+/* Each flare is drawn pointing along +x from its base, so scaling from 0 0 makes it lick outwards. */
+.flare { transform-origin: 0 0; opacity: 0; animation: flare var(--d, 7s) ease-in-out var(--delay, 0s) infinite; }
+@keyframes flare {
+  0%, 100% { transform: scale(0.12, 0.6); opacity: 0; }
+  20% { opacity: var(--o); }
+  48% { transform: scale(1, 1); opacity: var(--o); }
+  70% { transform: scale(0.6, 0.9); opacity: calc(var(--o) * 0.6); }
+}
+/* Prominences: a loop rises off the ring, holds, then dissolves forwards. */
+.prominence { stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; animation: prominence var(--d, 12s) ease-in-out var(--delay, 0s) infinite; }
+@keyframes prominence {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  12% { opacity: var(--o); }
+  45% { stroke-dashoffset: 0; opacity: var(--o); }
+  70% { stroke-dashoffset: 0; opacity: calc(var(--o) * 0.7); }
+  100% { stroke-dashoffset: -1; opacity: 0; }
+}
+.circle-svg.is-paused .flare, .circle-svg.is-paused .prominence { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .flare, .prominence { animation: none; opacity: 0; }
+}
+.circle-who { margin-top: 6px; text-align: center; }
+.circle-who > summary { display: inline-block; color: var(--ink-soft); font-size: 0.95rem; padding: 6px 10px; }
