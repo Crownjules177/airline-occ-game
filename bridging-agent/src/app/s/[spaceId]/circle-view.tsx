@@ -209,7 +209,7 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
       const focusIndex = hs.findIndex((h) => h.id === focusRef.current);
       // Space a circle needs: its own size plus its name label, or its names all round when in focus.
       const scaleOf = (i: number) => (focusIndex < 0 ? 1 : i === focusIndex ? FOCUS_SCALE : REST_SCALE);
-      const room = (i: number) => (i === focusIndex ? B[i].r * FOCUS_SCALE + 78 : B[i].r * scaleOf(i) + (focusIndex < 0 ? 24 : 36));
+      const room = (i: number) => (i === focusIndex ? B[i].r * FOCUS_SCALE + 104 : B[i].r * scaleOf(i) + (focusIndex < 0 ? 26 : 44));
 
       for (let i = 0; i < B.length; i++) {
         if (i === dragging) continue;
@@ -533,7 +533,7 @@ export function CircleView({ data, profileHref }: { data: CircleData; profileHre
         })}
       </svg>
 
-      <div className="circle-card" aria-live="polite" style={focused ? { borderColor: colour(focused.hue) } : undefined}>
+      <div className="circle-card" aria-live="polite" style={focused ? ({ "--w": colour(focused.hue) } as React.CSSProperties) : undefined}>
         {focused ? (
           <>
             <div className="spread">

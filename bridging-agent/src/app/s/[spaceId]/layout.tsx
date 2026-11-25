@@ -37,9 +37,7 @@ export default async function SpaceLayout({ children, params }: { children: Reac
   ].filter(Boolean) as { href: string; label: string }[];
   return (
     <>
-      <p className="muted small" style={{ margin: 0 }}>
-        {space.template.name}
-      </p>
+      <p className="kicker">{space.template.name}</p>
       <h1 style={{ marginTop: 2 }}>{space.space.name}</h1>
       <Tabs tabs={tabs} />
       {children}
